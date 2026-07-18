@@ -22,7 +22,7 @@
   }
   function shownOnline(real) { return Math.max(2, (real || 0) + onlineBoost()); }
   function renderCounter(total, todayV, real) {
-    $('#visit-counter').innerHTML = '香客足跡 <b>' + total.toLocaleString() + '</b> 次 ｜ 今日 <b>' + todayV + '</b> 次 ｜ <span class="online-dot"></span>線上 <b>' + shownOnline(real) + '</b> 人';
+    $('#visit-counter').innerHTML = '香客足跡 <b>' + total.toLocaleString() + '</b> 次 ｜ <span class="online-dot"></span>線上 <b>' + shownOnline(real) + '</b> 人';
   }
   async function pingVisit() {
     const ln = localCount();
