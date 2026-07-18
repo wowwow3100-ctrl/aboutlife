@@ -10,7 +10,9 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data'); // Railwa
 const STATS_FILE = path.join(DATA_DIR, 'stats.json');
 
 // ---------- 統計資料 ----------
-let stats = { total: 0, vids: {}, daily: {}, events: [] };
+// 無既有統計檔時的起始值（可用 BASE_TOTAL 環境變數覆蓋）
+const BASE_TOTAL = parseInt(process.env.BASE_TOTAL || '112', 10);
+let stats = { total: BASE_TOTAL, vids: {}, daily: {}, events: [] };
 try {
   if (fs.existsSync(STATS_FILE)) stats = Object.assign(stats, JSON.parse(fs.readFileSync(STATS_FILE, 'utf8')));
 } catch (e) { console.log('統計檔讀取失敗，重新開始', e.message); }
