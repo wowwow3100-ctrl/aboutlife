@@ -26,6 +26,18 @@ function getZodiac(m, d) {
   return 'capricorn'; // 1/1–1/19
 }
 
+// ---------- 星座三區間 ----------
+function getDecan(key, m, d) {
+  const D = ZODIAC_DECANS[key];
+  let idx;
+  if (key === 'capricorn') idx = (m === 12) ? 0 : (d <= 10 ? 1 : 2);
+  else {
+    const v = m * 100 + d;
+    idx = v >= D.b[1] ? 2 : (v >= D.b[0] ? 1 : 0);
+  }
+  return { idx, n: ['一', '二', '三'][idx], sub: D.sub[idx], range: D.range[idx], text: D.t[idx] };
+}
+
 // ---------- 節氣工具 ----------
 function epochDays(y, m, d) { return Math.floor(Date.UTC(y, m - 1, d) / 86400000); }
 function termMinutes(ty, t) { return ((epochDays(ty, t[0], t[1]) * 24 + t[2]) * 60) + t[3]; }

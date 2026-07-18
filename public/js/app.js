@@ -262,9 +262,15 @@
 
     // ===== 各系統卡片 =====
     const cards = [];
-    // 星座
-    cards.push({ id: 'zodiac', icon: Z.icon, title: '西洋星座．' + Z.name, tag: Z.elem + '象．守護星' + Z.ruler,
-      html: '<p class="c-trait">' + Z.trait + '</p><div class="c-grid">' +
+    // 星座（含三區間與出生日差異）
+    const decan = getDecan(zodiacKey, m, d);
+    const dayNumReduced = (d => { let t = d; while (t > 9) t = Math.floor(t / 10) + (t % 10); return t; })(d);
+    cards.push({ id: 'zodiac', icon: Z.icon, title: '西洋星座．' + Z.name + '（第' + decan.n + '區間）', tag: Z.elem + '象．守護星' + Z.ruler + '．副守護星' + decan.sub,
+      html: '<p class="c-note">依據：你生於 ' + m + '/' + d + '，落在' + Z.name + '第' + decan.n + '區間（' + decan.range + '）。同一星座依日期分三區間，副守護星不同、性格面貌也不同。</p>' +
+        '<p class="c-trait">' + Z.trait + '</p>' +
+        '<div class="c-grid"><div><label>第' + decan.n + '區間．' + decan.sub + '色彩</label>' + decan.text + '</div>' +
+        '<div><label>出生「日」的刻痕</label>同為' + Z.name + '，' + d + ' 日出生（生日數 ' + dayNumReduced + '）的你更帶有——' + DAYNUM[d] + '</div></div>' +
+        '<div class="c-grid" style="margin-top:10px">' +
         '<div><label>下半年整體</label>' + Z.h2.overall + '</div>' +
         '<div><label>愛情</label>' + Z.h2.love + '</div>' +
         '<div><label>財運</label>' + Z.h2.money + '</div>' +
@@ -337,7 +343,7 @@
 
     lastResult = {
       name, honorTxt: honor(), ymd: y + '/' + m + '/' + d,
-      zName: Z.name, zIcon: Z.icon, animal: sx.animal, sxIcon: SX.icon, sxRel: SX.rel,
+      zName: Z.name, zIcon: Z.icon, decanN: decan.n, animal: sx.animal, sxIcon: SX.icon, sxRel: SX.rel,
       lpTxt: (lp.master ? lp.master + '/' + lp.final : String(lp.final)), lpKey: NUMEROLOGY[lp.master || lp.final].key, py,
       scores, bestName: ASPECT_NAME[best], bestScore: scores[best],
       cope1: ZODIAC_COPE[zodiacKey].split('——')[0], dm: baziRes.dayMaster + GAN_ELEM[baziRes.dayMaster], dmStyle: DM_STYLE[baziRes.dayMaster],
@@ -372,7 +378,7 @@
     $('#compact-body').innerHTML =
       '<div class="cp-title">🏮 玄機閣．命理精簡報告</div>' +
       '<div class="cp-name">' + esc(r.name) + ' ' + r.honorTxt + '<span>國曆 ' + r.ymd + '</span></div>' +
-      '<div class="cp-chips"><span>' + r.zIcon + ' ' + r.zName + '</span><span>' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）</span><span>靈數 ' + r.lpTxt + '</span><span>日主 ' + r.dm + '</span></div>' +
+      '<div class="cp-chips"><span>' + r.zIcon + ' ' + r.zName + '（' + r.decanN + '區）</span><span>' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）</span><span>靈數 ' + r.lpTxt + '</span><span>日主 ' + r.dm + '</span></div>' +
       '<div class="cp-scores">' +
       ['財運|wealth', '愛情|love', '事業|career', '健康|health', '貴人|social'].map(x => {
         const [nm, k] = x.split('|');
