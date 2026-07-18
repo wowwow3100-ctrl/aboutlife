@@ -133,6 +133,28 @@
   // ---------- 結果組裝 ----------
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   function honor() { return state.gender === '男' ? '先生' : state.gender === '女' ? '小姐' : '緣主'; }
+  const ASPECT_NAME = { wealth: '財運', love: '愛情', career: '事業', health: '健康', social: '貴人' };
+  let lastResult = null;
+
+  // ---------- 複製 / 分享 ----------
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
+    const ta = document.createElement('textarea');
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  function doShare() {
+    const url = siteUrl();
+    let text = '玄機閣．線上命理分析｜星座×生肖×姓名學×生命靈數×八字五行，一次看懂 2026 下半年財運、愛情、事業！';
+    if (lastResult) text = '我在「玄機閣」測了 2026 下半年運勢，' + lastResult.bestName + '拿了 ' + lastResult.bestScore + ' 分！你也來算算～';
+    if (navigator.share) {
+      navigator.share({ title: '玄機閣．線上命理分析', text, url }).catch(() => {});
+    } else {
+      copyText(text + '\n' + url).then(() => toast('分享文字已複製，貼給朋友吧！'));
+    }
+  }
 
   function renderResult() {
     const { name, y, m, d, hourIdx, lateZi, blood } = state;
@@ -164,7 +186,6 @@
       '</div>';
 
     // 綜合分數
-    const ASPECT_NAME = { wealth: '財運', love: '愛情', career: '事業', health: '健康', social: '貴人' };
     const focusMap = { money: 'wealth', love: 'love', career: 'career', health: 'health', overall: null };
     const focusKey = focusMap[state.focus] || null;
     const order = Object.keys(ASPECT_NAME).sort((a, b) => (a === focusKey ? -1 : b === focusKey ? 1 : scores[b] - scores[a]));
@@ -188,6 +209,19 @@
       '<p><b>' + esc(given) + '</b>' + honor() + '，你的生命靈數為 <b>' + (lp.master ? lp.master + '（卓越數）' : lp.final) + ' 號</b>——' + NUMEROLOGY[lp.master || lp.final].key + '；2026 流年數 <b>' + py + '</b>，' + PERSONAL_YEAR[py] + '</p>' +
       '<p>丙午馬年下半年，' + relNote + '。五大運勢中以「<b>' + ASPECT_NAME[best] + '</b>」最為突出（' + scores[best] + ' 分），' + Z.name + '的你' + Z.h2.overall + '</p>' +
       '<p class="r-focus-tip">你最想了解的「' + ($('.focus-chip.sel') ? $('.focus-chip.sel').textContent.trim() : '整體') + '」詳解，已為你排在下方各單元之首。</p>';
+
+    // 性格側寫．處事風格
+    const waiInfo = n81(grids.wai).info;
+    const waiLine = waiInfo.l === '吉' ? '外格 ' + grids.wai + ' 屬吉，外緣與貴人運佳，出外常有人相挺；' :
+      waiInfo.l === '凶' ? '外格 ' + grids.wai + ' 偏弱，社交上宜主動經營、慎選盟友；' :
+        '外格 ' + grids.wai + ' 吉凶參半，人脈重質不重量；';
+    $('#r-persona').innerHTML =
+      '<div class="c-grid">' +
+      '<div><label>核心性格</label>' + Z.icon + ' ' + Z.name + '：' + Z.trait + '<br>' + SX.icon + ' 屬' + sx.animal + '：' + SX.trait + '</div>' +
+      '<div><label>遇到事情的處理方式</label>' + ZODIAC_COPE[zodiacKey] + '</div>' +
+      '<div><label>做事與決策風格</label>靈數 ' + (lp.master || lp.final) + ' 號：' + NUM_WORK[lp.master || lp.final] + '<br>日主' + baziRes.dayMaster + GAN_ELEM[baziRes.dayMaster] + '：' + DM_STYLE[baziRes.dayMaster] + '。</div>' +
+      '<div><label>人際與外緣</label>' + waiLine + (blood !== '不知道' ? BLOOD[blood].match : '真誠是你最好的名片。') + '</div>' +
+      '</div>';
 
     // 各月運勢
     $('#r-months').innerHTML = months.map(M =>
@@ -280,7 +314,55 @@
       '<div class="sys-head"><span class="sys-icon">' + c.icon + '</span><div><h3>' + c.title + '</h3><div class="sys-tag">' + c.tag + '</div></div></div>' +
       '<div class="sys-body">' + c.html + '</div></section>').join('');
 
+    lastResult = {
+      name, honorTxt: honor(), ymd: y + '/' + m + '/' + d,
+      zName: Z.name, zIcon: Z.icon, animal: sx.animal, sxIcon: SX.icon, sxRel: SX.rel,
+      lpTxt: (lp.master ? lp.master + '/' + lp.final : String(lp.final)), lpKey: NUMEROLOGY[lp.master || lp.final].key, py,
+      scores, bestName: ASPECT_NAME[best], bestScore: scores[best],
+      cope1: ZODIAC_COPE[zodiacKey].split('——')[0], dm: baziRes.dayMaster + GAN_ELEM[baziRes.dayMaster], dmStyle: DM_STYLE[baziRes.dayMaster],
+      lucky, tarotTxt: T.n + (tarot.upright ? '（正位）' : '（逆位）'), tarotAdv: T.adv,
+      missing: baziRes.missing.join('、') || '無', zH2: Z.h2.overall
+    };
     pingResultCount();
+  }
+
+  // ---------- 精簡版 ----------
+  function buildCompactText() {
+    const r = lastResult;
+    if (!r) return '';
+    return [
+      '🏮 玄機閣．命理精簡報告',
+      r.name + ' ' + r.honorTxt + '｜國曆 ' + r.ymd,
+      r.zIcon + ' ' + r.zName + '｜' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）｜靈數 ' + r.lpTxt + '（' + r.lpKey + '）｜日主 ' + r.dm,
+      '── 2026 下半年五運 ──',
+      '財運 ' + r.scores.wealth + '｜愛情 ' + r.scores.love + '｜事業 ' + r.scores.career + '｜健康 ' + r.scores.health + '｜貴人 ' + r.scores.social,
+      '最旺：' + r.bestName + '（' + r.bestScore + ' 分）',
+      '處事風格：' + r.cope1 + '；' + r.dmStyle,
+      '五行補氣：缺' + r.missing + '｜開運色 ' + r.lucky.color + '｜幸運數字 ' + r.lucky.nums + '｜吉方 ' + r.lucky.dir,
+      '幸運月份：' + r.lucky.month + '｜今日塔羅：' + r.tarotTxt,
+      '──────────',
+      '完整報告：' + siteUrl(),
+      'by 旺來 ' + SITE.authorHandle + '（Threads：' + SITE.authorUrl + '）'
+    ].join('\n');
+  }
+  function openCompact() {
+    const r = lastResult;
+    if (!r) return;
+    $('#compact-body').innerHTML =
+      '<div class="cp-title">🏮 玄機閣．命理精簡報告</div>' +
+      '<div class="cp-name">' + esc(r.name) + ' ' + r.honorTxt + '<span>國曆 ' + r.ymd + '</span></div>' +
+      '<div class="cp-chips"><span>' + r.zIcon + ' ' + r.zName + '</span><span>' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）</span><span>靈數 ' + r.lpTxt + '</span><span>日主 ' + r.dm + '</span></div>' +
+      '<div class="cp-scores">' +
+      ['財運|wealth', '愛情|love', '事業|career', '健康|health', '貴人|social'].map(x => {
+        const [nm, k] = x.split('|');
+        return '<div><label>' + nm + '</label><b>' + r.scores[k] + '</b></div>';
+      }).join('') + '</div>' +
+      '<div class="cp-line">⭐ 最旺：<b>' + r.bestName + '（' + r.bestScore + ' 分）</b>——' + esc(r.zH2) + '</div>' +
+      '<div class="cp-line">🧭 處事風格：' + esc(r.cope1) + '；' + esc(r.dmStyle) + '。</div>' +
+      '<div class="cp-line">🎨 開運：缺' + r.missing + '｜' + esc(r.lucky.color) + '｜數字 ' + esc(String(r.lucky.nums)) + '｜吉方 ' + r.lucky.dir + '｜幸運月 ' + r.lucky.month + '</div>' +
+      '<div class="cp-line">🃏 今日塔羅：' + r.tarotTxt + '——' + esc(r.tarotAdv) + '</div>' +
+      '<div class="cp-foot">完整報告：' + siteUrl() + '<br>by 旺來 <a href="' + SITE.authorUrl + '" target="_blank" rel="noopener">' + SITE.authorHandle + '</a></div>';
+    $('#compact-modal').classList.add('open');
   }
 
   // 統計「完成測算」次數（僅本機展示用）
@@ -298,5 +380,18 @@
     $('#btn-prev').onclick = () => gotoStep(Math.max(0, state.step - 1));
     $('#btn-again').onclick = () => { show('#screen-form'); gotoStep(0); };
     $('#btn-print').onclick = () => window.print();
+    $('#btn-share-intro').onclick = doShare;
+    $('#btn-share').onclick = doShare;
+    $('#btn-compact').onclick = openCompact;
+    $('#compact-close').onclick = () => $('#compact-modal').classList.remove('open');
+    $('#compact-modal').addEventListener('click', e => { if (e.target === $('#compact-modal')) $('#compact-modal').classList.remove('open'); });
+    $('#compact-copy').onclick = () => copyText(buildCompactText()).then(() => toast('精簡報告已複製，可直接貼上分享！'));
+    $('#compact-print').onclick = () => {
+      document.body.classList.add('print-compact');
+      const done = () => { document.body.classList.remove('print-compact'); window.removeEventListener('afterprint', done); };
+      window.addEventListener('afterprint', done);
+      window.print();
+      setTimeout(done, 2000);
+    };
   });
 })();

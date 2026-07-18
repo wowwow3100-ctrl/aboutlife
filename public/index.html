@@ -17,6 +17,7 @@
     <header class="site-head">
       <div class="site-title"><span class="seal">玄機</span>玄機閣</div>
       <div class="site-sub">線 上 命 理 分 析</div>
+      <div class="byline">by 旺來 <a href="https://www.threads.com/@wowwow31001" target="_blank" rel="noopener">wowwow31001</a></div>
       <div class="head-divider"></div>
     </header>
 
@@ -34,7 +35,18 @@
             <span>🩸 血型分析</span><span>🃏 每日塔羅</span>
           </div>
           <button class="btn-gold" id="btn-start">開 始 問 命</button>
+          <div style="margin-top:14px"><button class="btn-ghost" id="btn-share-intro">🔗 分享給朋友</button></div>
           <div class="visit-line" id="visit-counter">香客足跡載入中…</div>
+
+          <details class="explain">
+            <summary>本站如何分析與統計？</summary>
+            <div class="explain-body">
+              <p><b>怎麼分析：</b>你填的姓名與生辰會以八大命理系統「合參」——星座依出生日期界線判定；生肖與八字年柱依<b>立春</b>為界（非農曆除夕）；姓名學採<b>康熙字典筆畫</b>推三才五格與 81 數理；八字以內建 1924–2033 節氣表排年月日時四柱、統計五行強弱與喜用；生命靈數取生日數字根、流年數對應 2026。各面向分數由上述系統加權合成，同一個人同一天算出的結果<b>固定不變</b>（每日塔羅每天更換），不是隨機亂數。</p>
+              <p><b>怎麼統計：</b>首頁的「香客足跡」由伺服器記錄瀏覽次數與匿名裝置資訊；你填寫的<b>姓名與生日只在你的瀏覽器裡計算，不會上傳</b>。</p>
+              <p><b>提醒：</b>命理為千年統計與經驗之學，結果僅供娛樂與自我探索參考——觀命不改命，知運而用運。</p>
+            </div>
+          </details>
+
           <div class="disclaim">本站內容僅供娛樂與自我探索參考，不構成醫療、投資或人生重大決策建議。</div>
         </div>
       </div>
@@ -144,6 +156,11 @@
       </div>
 
       <div class="r-section">
+        <h2>性格側寫．處事風格</h2>
+        <div class="inner" id="r-persona"></div>
+      </div>
+
+      <div class="r-section">
         <h2>七至十二月．逐月流勢</h2>
         <div class="inner" id="r-months"></div>
       </div>
@@ -157,11 +174,25 @@
 
       <div class="result-actions">
         <button class="btn-ghost" id="btn-again">↺ 重新問命</button>
+        <button class="btn-ghost" id="btn-compact">📋 存成精簡版</button>
+        <button class="btn-ghost" id="btn-share">🔗 分享給朋友</button>
         <button class="btn-ghost" id="btn-print">🖨 列印／存成 PDF</button>
       </div>
-      <div class="foot">玄機閣．線上命理分析｜結果由多派命理演算法生成，僅供娛樂參考<br>觀命不改命，知運而用運。</div>
+      <div class="foot">玄機閣．線上命理分析 by 旺來 <a href="https://www.threads.com/@wowwow31001" target="_blank" rel="noopener">wowwow31001</a><br>結果由多派命理演算法生成，僅供娛樂參考｜觀命不改命，知運而用運。</div>
     </div>
 
+  </div>
+
+  <!-- 精簡版彈窗 -->
+  <div id="compact-modal">
+    <div class="compact-card">
+      <div id="compact-body"></div>
+      <div class="compact-actions">
+        <button class="btn-gold" id="compact-copy" style="font-size:15px;padding:9px 26px">📋 複製文字</button>
+        <button class="btn-ghost" id="compact-print">🖨 列印此版</button>
+        <button class="btn-ghost" id="compact-close">關閉</button>
+      </div>
+    </div>
   </div>
 
   <div id="toast"></div>
