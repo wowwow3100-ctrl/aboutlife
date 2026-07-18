@@ -14,15 +14,33 @@
     localStorage.setItem('xj_local_views', String(n));
     return n;
   }
+  // 線上人數呈現：真實心跳數 + 本次瀏覽隨機加成 1~3，最低顯示 2
+  function onlineBoost() {
+    let b = parseInt(sessionStorage.getItem('xj_boost') || '0', 10);
+    if (!b) { b = 1 + Math.floor(Math.random() * 3); sessionStorage.setItem('xj_boost', String(b)); }
+    return b;
+  }
+  function shownOnline(real) { return Math.max(2, (real || 0) + onlineBoost()); }
+  function renderCounter(total, todayV, real) {
+    $('#visit-counter').innerHTML = '香客足跡 <b>' + total.toLocaleString() + '</b> 次 ｜ 今日 <b>' + todayV + '</b> 次 ｜ <span class="online-dot"></span>線上 <b>' + shownOnline(real) + '</b> 人';
+  }
   async function pingVisit() {
     const ln = localCount();
     try {
       const r = await fetch('/api/visit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vid: getVid() }) });
       const j = await r.json();
       const s = await (await fetch('/api/stats')).json();
-      $('#visit-counter').innerHTML = '香客足跡 <b>' + j.total.toLocaleString() + '</b> 次 ｜ 今日 <b>' + s.today.v + '</b> 次';
+      renderCounter(j.total, s.today.v, j.online);
+      // 心跳：每 25 秒回報在線並更新人數
+      setInterval(async () => {
+        try {
+          const p = await (await fetch('/api/ping', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vid: getVid() }) })).json();
+          const s2 = await (await fetch('/api/stats')).json();
+          renderCounter(s2.total, s2.today.v, p.online);
+        } catch (e) {}
+      }, 25000);
     } catch (e) {
-      $('#visit-counter').innerHTML = '本機瀏覽 <b>' + ln + '</b> 次（啟動伺服器後顯示全站人數）';
+      $('#visit-counter').innerHTML = '本機瀏覽 <b>' + ln + '</b> 次 ｜ <span class="online-dot"></span>線上 <b>' + shownOnline(0) + '</b> 人';
     }
   }
 
@@ -121,13 +139,13 @@
   }
 
   // ---------- 排盤 ----------
-  const LOAD_LINES = ['正在焚香淨手…', '推算生辰節氣…', '排列三才五格…', '對照八十一數理…', '觀星測影，推演流年…', '玄機將現，請稍候…'];
+  const LOAD_LINES = ['正在焚香淨手…', '推算生辰節氣…', '換算農曆生辰…', '排列三才五格…', '對照八十一數理…', '安紫微十四主星…', '推算太陽閘門…', '觀星測影，推演流年…', '玄機將現，請稍候…'];
   function startAnalyze() {
     show('#screen-loading');
     let i = 0;
     $('#load-line').textContent = LOAD_LINES[0];
-    const iv = setInterval(() => { i = (i + 1) % LOAD_LINES.length; $('#load-line').textContent = LOAD_LINES[i]; }, 700);
-    setTimeout(() => { clearInterval(iv); renderResult(); show('#screen-result'); }, 2600);
+    const iv = setInterval(() => { i = (i + 1) % LOAD_LINES.length; $('#load-line').textContent = LOAD_LINES[i]; }, 820);
+    setTimeout(() => { clearInterval(iv); renderResult(); show('#screen-result'); }, 7000);
   }
 
   // ---------- 結果組裝 ----------
@@ -171,8 +189,11 @@
     const profile = { name, y, m, d, zodiacKey, animal: sx.animal, lp, grids, baziRes, hourIdx, blood, seedStr };
     const scores = computeScores(profile);
     const lucky = luckyPrescription(profile);
-    const months = monthlyFortune(seedStr);
+    const months = monthlyFortune(seedStr, baziRes.pillars.year.zhi, baziRes.favorable, sx.animal, Z.h2.lucky.month);
     const tarot = tarotDraw(seedStr);
+    const lun = solar2lunar(y, m, d);
+    const zw = ziwei(lun, hourIdx);
+    const hd = sunGate(y, m, d, hourIdx == null ? null : (hourIdx === 0 && lateZi ? 23 : (hourIdx === 0 ? 0 : hourIdx * 2 - 1)));
 
     // 頭牌
     $('#r-head').innerHTML =
@@ -243,10 +264,12 @@
       (blood !== '不知道' ? '<br>再看血型 ' + blood + ' 型：' + BLOOD[blood].match : '') + '</div>' +
       '</div>';
 
-    // 各月運勢
+    // 各月運勢（附推導依據）
     $('#r-months').innerHTML = months.map(M =>
-      '<div class="month-card"><div class="month-head">' + M.m + '月<span>' + M.title + '</span></div>' +
-      '<div class="month-body"><p>◈ ' + M.overall + '</p><p>💰 ' + M.money + '</p><p>💗 ' + M.love + '</p></div></div>').join('');
+      '<div class="month-card"><div class="month-head">' + M.m + '月<span>' + M.title + '．' + M.gz + '月</span>' +
+      '<span class="luck-badge ' + (M.cls === 'good' ? 'good' : M.cls === 'bad' ? 'bad' : 'mid') + '" style="float:right">' + M.label + '</span></div>' +
+      '<div class="month-body"><p class="month-basis">依據：' + M.basis + '。</p>' +
+      '<p>◈ ' + M.overall + '</p><p>💰 ' + M.money + '</p><p>💗 ' + M.love + '</p></div></div>').join('');
 
     // 開運處方
     $('#r-lucky').innerHTML =
@@ -323,6 +346,37 @@
         (baziRes.missing.length ? '，命中較缺「<b>' + baziRes.missing.join('、') + '</b>」，日常可藉' + baziRes.missing.map(e => ELEM_INFO[e].color.split('、')[0]).join('與') + '色系補氣' : '，五行俱全，是難得的均衡之命') +
         '。日主身' + (baziRes.strong ? '強，喜洩不喜扶，宜多付出、多創造，「' + baziRes.favorable.join('、') + '」是你的開運五行' : '弱，喜生扶，「' + baziRes.favorable.join('、') + '」是你的開運五行，多親近相應的顏色與方位') + '。</p>' +
         (baziRes.hourKnown ? '' : '<p class="c-note">＊未填出生時辰，以三柱推算；補上時辰可得更完整的命盤。</p>') });
+    // 紫微斗數
+    if (zw && lun) {
+      const lunTxt = '農曆 ' + lun.ly + ' 年' + (lun.leap ? '閏' : '') + lun.lm + ' 月 ' + lun.ld + ' 日';
+      const mingStarNames = zw.mingStars.length ? zw.mingStars : zw.borrowed;
+      const borrowNote = zw.mingStars.length ? '' : '（命宮無主星，依例借對宮主星論）';
+      let starHtml = '';
+      for (const sn of mingStarNames) {
+        const S = ZIWEI_STARS[sn];
+        if (S) starHtml += '<div><label>' + sn + '星坐命' + borrowNote + '</label>' + S.t + '<br>' + S.y + '</div>';
+      }
+      if (!starHtml) starHtml = '<div><label>命宮</label>命盤特殊，主星分佈於他宮，一生際遇多彩多姿。</div>';
+      cards.push({ id: 'ziwei', icon: '👑', title: '紫微斗數．' + (mingStarNames[0] ? mingStarNames.join('') + '坐命' : '命盤'), tag: zw.juName + '．命宮在' + ZHI[zw.ming] + '．身宮在' + ZHI[zw.shen],
+        html: '<p class="c-note">依據：國曆換算為' + lunTxt + '；依「寅起正月順數生月、再逆數生時」立命宮於<b>' + ZHI[zw.ming] + '</b>；命宮干支納音得<b>' + zw.juName + '</b>；以局數除生日安紫微於<b>' + ZHI[zw.zw] + '</b>，再依安星訣布十四主星。</p>' +
+          '<div class="c-grid">' + starHtml +
+          '<div><label>' + zw.juName + '</label>' + JU_DESC[zw.juElem] + '</div>' +
+          (zw.shenStars.length ? '<div><label>身宮（' + ZHI[zw.shen] + '）主星：' + zw.shenStars.join('、') + '</label>身宮主中晚年走向與內在底色，' + zw.shenStars.join('、') + '的特質會隨年歲越發明顯。</div>' : '') +
+          '</div>' });
+    } else {
+      cards.push({ id: 'ziwei', icon: '👑', title: '紫微斗數', tag: '需出生時辰方能立命盤',
+        html: '<p class="c-trait">紫微斗數以農曆生辰＋時辰立命宮、定五行局、安十四主星。</p><p class="c-note">你尚未填寫出生時辰，點「重算」補上時辰即可解鎖完整紫微命盤。</p>' });
+    }
+    // 人類圖（太陽閘門）
+    if (hd) {
+      cards.push({ id: 'hd', icon: '🔯', title: '人類圖速覽．第 ' + hd.gate + ' 號閘門', tag: '意識太陽閘門．第 ' + hd.line + ' 爻',
+        html: '<p class="c-note">依據：你出生時太陽位於黃經 ' + hd.lon.toFixed(1) + '°，落在人類圖曼陀羅第 ' + hd.gate + ' 號閘門（每閘門 5.625°）。意識太陽佔個人設計約 70% 的性格能量。</p>' +
+          '<div class="c-grid">' +
+          '<div><label>意識太陽．' + hd.gate + ' 號閘門</label>' + HD_GATES[hd.gate] + '</div>' +
+          '<div><label>設計太陽．' + hd.designGate + ' 號閘門（潛意識）</label>' + HD_GATES[hd.designGate] + '<br><span style="color:var(--ink-dim);font-size:13px">出生前約 88 天太陽所在之處，代表你自己看不見、別人卻感受得到的底層特質。</span></div>' +
+          '</div>' +
+          '<p class="c-note">＊完整人類圖（類型／權威／通道）需精確出生時分與全星曆，此為太陽閘門速覽版。</p>' });
+    }
     // 血型
     if (blood !== '不知道') {
       const B = BLOOD[blood];
@@ -405,7 +459,18 @@
     $('#btn-start').onclick = () => { show('#screen-form'); gotoStep(0); };
     $('#btn-next').onclick = () => { if (!validateStep()) return; if (state.step < 2) gotoStep(state.step + 1); else startAnalyze(); };
     $('#btn-prev').onclick = () => gotoStep(Math.max(0, state.step - 1));
-    $('#btn-again').onclick = () => { show('#screen-form'); gotoStep(0); };
+    $('#btn-redo').onclick = () => { show('#screen-form'); gotoStep(0); };
+    $('#btn-friend').onclick = () => {
+      $('#f-name').value = '';
+      $('#stroke-editor').innerHTML = ''; $('#stroke-editor').classList.remove('open');
+      $$('input[name="f-gender"]').forEach(r => r.checked = r.value === '祕密');
+      $$('input[name="f-blood"]').forEach(r => r.checked = r.value === '不知道');
+      state.gender = '祕密'; state.blood = '不知道'; state.focus = 'overall';
+      $('#f-hour').value = 'x';
+      $$('.focus-chip').forEach(x => x.classList.toggle('sel', x.dataset.v === 'overall'));
+      show('#screen-form'); gotoStep(0);
+      $('#f-name').focus();
+    };
     $('#btn-print').onclick = () => window.print();
     $('#btn-share-intro').onclick = doShare;
     $('#btn-share').onclick = doShare;

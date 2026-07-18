@@ -199,6 +199,96 @@ function bazi(y, m, d, hourIdx, lateZi) {
   return { pillars, counts, chars, dayMaster: dm, dmElem, strong, favorable, missing, maxElem, baziYear: by, hourKnown: hourIdx != null };
 }
 
+// ---------- 農曆換算 ----------
+function solar2lunar(y, m, d) {
+  const L = GEN.LUNAR;
+  const ed = epochDays(y, m, d);
+  let yi = y - L.start;
+  if (yi < 0 || yi >= L.cny.length) return null;
+  if (ed < L.cny[yi]) yi--;
+  if (yi < 0) return null;
+  let off = ed - L.cny[yi];
+  const lp = L.leap[yi], b = L.bits[yi];
+  const total = lp ? 13 : 12;
+  let mNum = 1, isLeap = false;
+  for (let i = 0; i < total; i++) {
+    const len = (b & (1 << i)) ? 30 : 29;
+    if (off < len) return { ly: L.start + yi, lm: mNum, leap: isLeap, ld: off + 1 };
+    off -= len;
+    if (lp && mNum === lp && !isLeap) isLeap = true;
+    else { isLeap = false; mNum++; }
+  }
+  return null;
+}
+
+// ---------- 紫微斗數 ----------
+// hourIdx: 0=子…11=亥（必填）；lun: solar2lunar 結果
+function ziwei(lun, hourIdx) {
+  if (!lun || hourIdx == null) return null;
+  // 命宮/身宮：寅起正月順數生月；由生月宮起子時，命逆數、身順數至生時
+  const YIN = 2; // 寅 index（子=0）
+  const monthGong = (YIN + lun.lm - 1) % 12;
+  const ming = ((monthGong - hourIdx) % 12 + 12) % 12;
+  const shen = (monthGong + hourIdx) % 12;
+  // 命宮天干（五虎遁，依農曆年干）
+  const yGan = ((lun.ly - 4) % 10 + 10) % 10;
+  const yinGan = (yGan % 5) * 2 + 2; // 寅宮天干
+  const mingGanIdx = (yinGan + ((ming - YIN) % 12 + 12) % 12) % 10;
+  // 命宮干支 → 納音 → 五行局
+  const gzIdx = (function () { for (let i = 0; i < 60; i++) { if (i % 10 === mingGanIdx && i % 12 === ming) return i; } return 0; })();
+  const juElem = NAYIN[gzIdx];
+  const ju = JU_NUM[juElem];
+  // 紫微落宮：商=⌈日/局⌉，借=商×局−日；借奇減偶加；寅起
+  const q = Math.ceil(lun.ld / ju);
+  const borrow = q * ju - lun.ld;
+  const c = (borrow % 2 === 1) ? q - borrow : q + borrow;
+  const zw = ((YIN + c - 1) % 12 + 12) % 12;
+  // 十四主星
+  const stars = {};
+  const put = (idx, name) => { const k = ((idx % 12) + 12) % 12; (stars[k] = stars[k] || []).push(name); };
+  put(zw, '紫微'); put(zw - 1, '天機'); put(zw - 3, '太陽'); put(zw - 4, '武曲'); put(zw - 5, '天同'); put(zw - 8, '廉貞');
+  const tf = ((4 - zw) % 12 + 12) % 12;
+  put(tf, '天府'); put(tf + 1, '太陰'); put(tf + 2, '貪狼'); put(tf + 3, '巨門'); put(tf + 4, '天相'); put(tf + 5, '天梁'); put(tf + 6, '七殺'); put(tf + 10, '破軍');
+  const mingStars = stars[ming] || [];
+  const opposite = (ming + 6) % 12;
+  const borrowed = mingStars.length ? null : (stars[opposite] || []);
+  return { ming, shen, monthGong, juElem, ju, juName: JU_NAME[juElem], zw, stars, mingStars, borrowed, shenStars: stars[shen] || [] };
+}
+
+// ---------- 人類圖．太陽閘門 ----------
+function sunLongitude(y, m, d, hh) {
+  const n = (Date.UTC(y, m - 1, d, (hh == null ? 12 : hh) - 8) / 86400000) - 10957.5; // 自 J2000（台灣時區→UTC）
+  const L = (280.460 + 0.9856474 * n) % 360;
+  const g = ((357.528 + 0.9856003 * n) % 360) * Math.PI / 180;
+  return ((L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) % 360 + 360) % 360;
+}
+function sunGate(y, m, d, hh) {
+  const lon = sunLongitude(y, m, d, hh);
+  const off = ((lon - 302) % 360 + 360) % 360;
+  const idx = Math.floor(off / 5.625) % 64;
+  const line = Math.floor((off % 5.625) / 0.9375) + 1;
+  // 設計太陽：出生前約 88 度（≈88天）
+  const dLon = ((lon - 88) % 360 + 360) % 360;
+  const dOff = ((dLon - 302) % 360 + 360) % 360;
+  const dIdx = Math.floor(dOff / 5.625) % 64;
+  return { lon, gate: HD_WHEEL[idx], line, designGate: HD_WHEEL[dIdx] };
+}
+
+// ---------- 地支關係（月支×生肖支） ----------
+const LIUHE = { 0: 1, 1: 0, 2: 11, 11: 2, 3: 10, 10: 3, 4: 9, 9: 4, 5: 8, 8: 5, 6: 7, 7: 6 };
+const SANHE = [[8, 0, 4], [11, 3, 7], [2, 6, 10], [5, 9, 1]];
+const HAI = { 0: 7, 7: 0, 1: 6, 6: 1, 2: 5, 5: 2, 3: 4, 4: 3, 8: 11, 11: 8, 9: 10, 10: 9 };
+const PO = { 0: 9, 9: 0, 1: 4, 4: 1, 2: 11, 11: 2, 3: 6, 6: 3, 5: 8, 8: 5, 7: 10, 10: 7 };
+function zhiRel(a, b) {
+  if (a === b) return { k: 'same', n: '同氣比和' };
+  if (LIUHE[a] === b) return { k: 'liuhe', n: '六合' };
+  if (SANHE.some(g => g.includes(a) && g.includes(b))) return { k: 'sanhe', n: '三合' };
+  if ((a + 6) % 12 === b) return { k: 'chong', n: '相沖' };
+  if (HAI[a] === b) return { k: 'hai', n: '相害' };
+  if (PO[a] === b) return { k: 'po', n: '相破' };
+  return { k: 'none', n: '無刑沖' };
+}
+
 // ---------- 塔羅（每人每日一張，固定）----------
 function tarotDraw(profileSeed) {
   const today = new Date();
@@ -243,13 +333,33 @@ function computeScores(profile) {
   return scores;
 }
 
-// ---------- 下半年月運（種子選句）----------
-function monthlyFortune(profileSeed) {
+// ---------- 下半年月運（月支×生肖×喜用推導）----------
+function monthlyFortune(profileSeed, animalZhiIdx, favorable, animalName, luckyMonthStr) {
   const out = [];
   for (let mm = 7; mm <= 12; mm++) {
     const rng = mulberry32(seedHash(profileSeed + '#month#' + mm));
-    const M = H2MONTH[mm];
-    out.push({ m: mm, title: M.t, overall: M.o[Math.floor(rng() * M.o.length)], money: M.m[Math.floor(rng() * M.m.length)], love: M.l[Math.floor(rng() * M.l.length)] });
+    const gz = MONTH_GZ_2026[mm];
+    const zhiCh = gz[1];
+    const zhiIdx = ZHI.indexOf(zhiCh);
+    const elem = ZHI_ELEM[zhiCh];
+    const rel = zhiRel(zhiIdx, animalZhiIdx);
+    let score = { sanhe: 2, liuhe: 2, same: 1, chong: -2, hai: -1, po: -1, none: 0 }[rel.k];
+    const fav = favorable.includes(elem);
+    if (fav) score += 1;
+    const isLucky = luckyMonthStr === (mm + '月');
+    if (isLucky) score += 1;
+    const cls = score >= 2 ? 'good' : (score <= -1 ? 'bad' : 'mid');
+    let basis = mm + '月為' + gz + '月（月支' + zhiCh + '屬' + elem + '），' + zhiCh + '與你的生肖' + animalName + rel.n;
+    if (fav) basis += '；' + elem + '又是你的喜用五行';
+    if (isLucky) basis += '；並逢你的星座幸運月';
+    const P = MONTH_TXT[cls];
+    out.push({
+      m: mm, title: MONTH_TITLE[mm], gz, cls, basis,
+      label: cls === 'good' ? '吉' : cls === 'bad' ? '慎' : '平',
+      overall: P.o[Math.floor(rng() * P.o.length)],
+      money: P.m[Math.floor(rng() * P.m.length)],
+      love: P.l[Math.floor(rng() * P.l.length)]
+    });
   }
   return out;
 }

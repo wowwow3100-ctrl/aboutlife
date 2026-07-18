@@ -50,6 +50,19 @@ function recordVisit(vid, ua) {
   scheduleSave();
 }
 
+// ---------- 線上人數（心跳制，70 秒內有心跳視為在線） ----------
+const online = {};
+function markOnline(vid) { if (vid) online[vid] = Date.now(); }
+function onlineCount() {
+  const now = Date.now();
+  let n = 0;
+  for (const k of Object.keys(online)) {
+    if (now - online[k] > 70000) delete online[k];
+    else n++;
+  }
+  return n;
+}
+
 // ---------- 靜態檔案 ----------
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -77,8 +90,21 @@ const server = http.createServer((req, res) => {
       let vid = null;
       try { vid = (JSON.parse(body || '{}').vid || '').slice(0, 40) || null; } catch (e) {}
       recordVisit(vid, req.headers['user-agent']);
+      markOnline(vid);
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ ok: 1, total: stats.total }));
+      res.end(JSON.stringify({ ok: 1, total: stats.total, online: onlineCount() }));
+    });
+    return;
+  }
+  if (p === '/api/ping' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 2048) req.destroy(); });
+    req.on('end', () => {
+      let vid = null;
+      try { vid = (JSON.parse(body || '{}').vid || '').slice(0, 40) || null; } catch (e) {}
+      markOnline(vid);
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: 1, online: onlineCount() }));
     });
     return;
   }
@@ -91,6 +117,7 @@ const server = http.createServer((req, res) => {
       total: stats.total,
       uniqueTotal: Object.keys(stats.vids).length,
       today: stats.daily[day] || { v: 0, u: 0 },
+      online: onlineCount(),
       daily,
       events: stats.events.slice(-50).reverse()
     }));
