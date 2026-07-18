@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>玄機閣．訪客統計</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .stat-card { border: 1px solid var(--gold-dim); border-radius: 6px; padding: 18px; text-align: center; background: linear-gradient(180deg, var(--bg-card), var(--bg-card2)); }
+    .stat-card label { display: block; color: var(--gold); font-size: 13px; letter-spacing: .2em; margin-bottom: 6px; }
+    .stat-card .v { font-size: 34px; color: var(--gold-bright); font-weight: 900; }
+    #chart { width: 100%; height: 220px; display: block; }
+    .ev-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .ev-table th { color: var(--gold); text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--gold-dim); }
+    .ev-table td { padding: 6px 8px; border-bottom: 1px dashed rgba(217,164,65,.18); color: var(--ink-dim); }
+    .err-box { text-align: center; color: var(--ink-dim); padding: 40px 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-head">
+      <div class="site-title"><span class="seal">玄機</span>訪客統計</div>
+      <div class="site-sub">玄 機 閣 香 客 錄</div>
+      <div class="head-divider"></div>
+    </header>
+
+    <div id="content" style="display:none">
+      <div class="stat-grid">
+        <div class="stat-card"><label>總瀏覽次數</label><div class="v" id="s-total">–</div></div>
+        <div class="stat-card"><label>不重複訪客</label><div class="v" id="s-uniq">–</div></div>
+        <div class="stat-card"><label>今日瀏覽</label><div class="v" id="s-today">–</div></div>
+        <div class="stat-card"><label>今日訪客</label><div class="v" id="s-today-u">–</div></div>
+      </div>
+
+      <div class="r-section">
+        <h2>每日瀏覽趨勢（近 60 天）</h2>
+        <div class="inner"><canvas id="chart"></canvas></div>
+      </div>
+
+      <div class="r-section">
+        <h2>最近來訪紀錄</h2>
+        <div class="inner">
+          <table class="ev-table"><thead><tr><th>時間</th><th>裝置</th></tr></thead><tbody id="ev-body"></tbody></table>
+        </div>
+      </div>
+      <div class="foot">每 30 秒自動更新｜<a href="index.html">← 回到玄機閣</a></div>
+    </div>
+
+    <div id="err" class="err-box" style="display:none">
+      ⚠️ 無法連到統計伺服器。<br>請以「啟動網站.bat」啟動伺服器後，透過 http://localhost:3300/admin.html 開啟本頁。
+    </div>
+  </div>
+
+  <script>
+    async function load() {
+      try {
+        const s = await (await fetch('/api/stats')).json();
+        document.getElementById('content').style.display = '';
+        document.getElementById('err').style.display = 'none';
+        document.getElementById('s-total').textContent = s.total.toLocaleString();
+        document.getElementById('s-uniq').textContent = s.uniqueTotal.toLocaleString();
+        document.getElementById('s-today').textContent = s.today.v.toLocaleString();
+        document.getElementById('s-today-u').textContent = s.today.u.toLocaleString();
+        drawChart(s.daily);
+        const tb = document.getElementById('ev-body');
+        tb.innerHTML = s.events.map(e => {
+          const d = new Date(e.t);
+          const pad = n => String(n).padStart(2, '0');
+          const ts = d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+          let dev = '桌機';
+          const ua = e.ua || '';
+          if (/mobile|iphone|android/i.test(ua)) dev = '手機';
+          else if (/ipad|tablet/i.test(ua)) dev = '平板';
+          else if (/curl|bot|spider/i.test(ua)) dev = '程式';
+          return '<tr><td>' + ts + '</td><td>' + dev + '｜' + ua.slice(0, 60).replace(/</g, '&lt;') + '</td></tr>';
+        }).join('');
+      } catch (e) {
+        document.getElementById('content').style.display = 'none';
+        document.getElementById('err').style.display = '';
+      }
+    }
+    function drawChart(daily) {
+      const cv = document.getElementById('chart');
+      const W = cv.clientWidth || 700, H = 220;
+      const dpr = window.devicePixelRatio || 1;
+      cv.width = W * dpr; cv.height = H * dpr;
+      const ctx = cv.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, W, H);
+      if (!daily.length) { ctx.fillStyle = '#c8ab7d'; ctx.font = '14px serif'; ctx.fillText('尚無資料', W / 2 - 28, H / 2); return; }
+      const max = Math.max(...daily.map(x => x.v), 1);
+      const pad = 26, bw = (W - pad * 2) / daily.length;
+      daily.forEach((x, i) => {
+        const h = (x.v / max) * (H - 58);
+        const gx = pad + i * bw;
+        const grd = ctx.createLinearGradient(0, H - 30 - h, 0, H - 30);
+        grd.addColorStop(0, '#f2cd7b'); grd.addColorStop(1, '#8a5a20');
+        ctx.fillStyle = grd;
+        ctx.fillRect(gx + bw * 0.15, H - 30 - h, Math.max(bw * 0.7, 2), h);
+        if (daily.length <= 20 || i % Math.ceil(daily.length / 12) === 0) {
+          ctx.fillStyle = '#8d7350'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(x.d.slice(5), gx + bw / 2, H - 12);
+        }
+        if (daily.length <= 31) {
+          ctx.fillStyle = '#f2cd7b'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(x.v, gx + bw / 2, H - 36 - h);
+        }
+      });
+    }
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>

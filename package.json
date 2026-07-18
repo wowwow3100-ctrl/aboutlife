@@ -1,0 +1,6 @@
+{
+  "name": "xuanji-fortune-site",
+  "version": "1.0.0",
+  "description": "玄機閣．線上命理分析（星座/生肖/姓名學/生命靈數/八字五行/血型/塔羅）",
+  "scripts": { "start": "node server.js" }
+}

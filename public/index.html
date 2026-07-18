@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>玄機閣．線上命理分析｜星座・生肖・姓名學・生命靈數・八字五行</title>
+  <meta name="description" content="免費線上命理分析：西洋星座、生肖運程、姓名學三才五格、生命靈數、八字五行、血型分析、每日塔羅，一次算清 2026 下半年財運、愛情、事業運勢。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏮</text></svg>">
+</head>
+<body>
+  <div class="gold-dust" id="gold-dust"></div>
+  <div class="wrap">
+
+    <header class="site-head">
+      <div class="site-title"><span class="seal">玄機</span>玄機閣</div>
+      <div class="site-sub">線 上 命 理 分 析</div>
+      <div class="head-divider"></div>
+    </header>
+
+    <!-- 首頁 -->
+    <div class="screen active" id="screen-intro">
+      <div class="hero">
+        <div class="hero-frame"><span class="corner"></span>
+          <h2>天機藏於生辰，命名載於筆畫</h2>
+          <p class="lead">填寫姓名與生辰，玄機閣為你合參八大命理系統，</p>
+          <p class="lead">細解 <b style="color:var(--gold-bright)">2026 丙午馬年下半年</b> 的財運、愛情、事業與健康。</p>
+          <p class="lead-dim">觀命不改命，知運而用運——結果僅供參考，人生仍由你主筆。</p>
+          <div class="sys-icons">
+            <span>♈ 西洋星座</span><span>🐴 生肖運程</span><span>✍️ 姓名學三才五格</span>
+            <span>🔢 生命靈數</span><span>☯️ 八字五行</span><span>🎂 生日密碼</span>
+            <span>🩸 血型分析</span><span>🃏 每日塔羅</span>
+          </div>
+          <button class="btn-gold" id="btn-start">開 始 問 命</button>
+          <div class="visit-line" id="visit-counter">香客足跡載入中…</div>
+          <div class="disclaim">本站內容僅供娛樂與自我探索參考，不構成醫療、投資或人生重大決策建議。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 引導式表單 -->
+    <div class="screen" id="screen-form">
+      <div class="form-panel">
+        <div class="progress">
+          <div class="progress-dot on">姓名</div>
+          <div class="progress-dot">生辰</div>
+          <div class="progress-dot">補訊</div>
+        </div>
+
+        <div class="form-step active">
+          <h3>一、報上姓名</h3>
+          <div class="step-sub">姓名學需以中文全名推算三才五格（支援複姓）</div>
+          <div class="field">
+            <label>中文姓名</label>
+            <input type="text" id="f-name" maxlength="6" placeholder="例：王小明" autocomplete="off">
+            <div id="stroke-editor"></div>
+          </div>
+          <div class="field">
+            <label>性別</label>
+            <div class="radio-row">
+              <label><input type="radio" name="f-gender" value="男"><span>男</span></label>
+              <label><input type="radio" name="f-gender" value="女"><span>女</span></label>
+              <label><input type="radio" name="f-gender" value="祕密" checked><span>保密</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <h3>二、生辰八字</h3>
+          <div class="step-sub">生肖與年柱以「立春」為界；時辰不確定可先略過</div>
+          <div class="field">
+            <label>國曆生日</label>
+            <div class="row3">
+              <select id="f-year"></select>
+              <select id="f-month"></select>
+              <select id="f-day"></select>
+            </div>
+          </div>
+          <div class="field">
+            <label>出生時辰</label>
+            <select id="f-hour"></select>
+          </div>
+          <div class="form-note">＊夜半 23:00–23:59 出生者請選「晚子時」，八字日柱將依命理慣例歸入翌日。</div>
+        </div>
+
+        <div class="form-step">
+          <h3>三、補充資訊</h3>
+          <div class="step-sub">讓分析更貼近你（可略過血型）</div>
+          <div class="field">
+            <label>血型</label>
+            <div class="radio-row">
+              <label><input type="radio" name="f-blood" value="A"><span>A 型</span></label>
+              <label><input type="radio" name="f-blood" value="B"><span>B 型</span></label>
+              <label><input type="radio" name="f-blood" value="O"><span>O 型</span></label>
+              <label><input type="radio" name="f-blood" value="AB"><span>AB 型</span></label>
+              <label><input type="radio" name="f-blood" value="不知道" checked><span>不知道</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label>你最想了解</label>
+            <div class="radio-row">
+              <span class="focus-chip sel" data-v="overall">整體運勢</span>
+              <span class="focus-chip" data-v="money">財運</span>
+              <span class="focus-chip" data-v="love">愛情</span>
+              <span class="focus-chip" data-v="career">事業</span>
+              <span class="focus-chip" data-v="health">健康</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-ghost" id="btn-prev" style="visibility:hidden">上一步</button>
+          <button class="btn-gold" id="btn-next" style="font-size:16px;padding:10px 34px">下一步</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 載入 -->
+    <div class="screen" id="screen-loading">
+      <div class="loading-box">
+        <div class="compass">
+          <div class="ring"></div>
+          <div class="ring2"><span class="bagua">乾兌離震巽坎艮坤</span></div>
+          <div class="taiji">☯</div>
+        </div>
+        <div id="load-line">正在焚香淨手…</div>
+      </div>
+    </div>
+
+    <!-- 結果 -->
+    <div class="screen" id="screen-result">
+      <div class="r-section" id="r-head"></div>
+
+      <div class="r-section">
+        <h2>下半年五運總覽</h2>
+        <div class="inner" id="r-scores"></div>
+      </div>
+
+      <div class="r-section">
+        <h2>命理總論</h2>
+        <div class="inner" id="r-summary"></div>
+      </div>
+
+      <div class="r-section">
+        <h2>七至十二月．逐月流勢</h2>
+        <div class="inner" id="r-months"></div>
+      </div>
+
+      <div class="r-section">
+        <h2>開運處方箋</h2>
+        <div class="inner" id="r-lucky"></div>
+      </div>
+
+      <div id="r-cards"></div>
+
+      <div class="result-actions">
+        <button class="btn-ghost" id="btn-again">↺ 重新問命</button>
+        <button class="btn-ghost" id="btn-print">🖨 列印／存成 PDF</button>
+      </div>
+      <div class="foot">玄機閣．線上命理分析｜結果由多派命理演算法生成，僅供娛樂參考<br>觀命不改命，知運而用運。</div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="js/gen.js"></script>
+  <script src="js/content.js"></script>
+  <script src="js/content2.js"></script>
+  <script src="js/fortune.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // 金箔粒子
+    (function () {
+      const box = document.getElementById('gold-dust');
+      for (let i = 0; i < 18; i++) {
+        const s = document.createElement('i');
+        s.style.left = Math.random() * 100 + 'vw';
+        s.style.animationDuration = (7 + Math.random() * 9) + 's';
+        s.style.animationDelay = (-Math.random() * 12) + 's';
+        s.style.transform = 'scale(' + (0.5 + Math.random()) + ')';
+        box.appendChild(s);
+      }
+    })();
+  </script>
+</body>
+</html>
