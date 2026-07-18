@@ -210,17 +210,37 @@
       '<p>丙午馬年下半年，' + relNote + '。五大運勢中以「<b>' + ASPECT_NAME[best] + '</b>」最為突出（' + scores[best] + ' 分），' + Z.name + '的你' + Z.h2.overall + '</p>' +
       '<p class="r-focus-tip">你最想了解的「' + ($('.focus-chip.sel') ? $('.focus-chip.sel').textContent.trim() : '整體') + '」詳解，已為你排在下方各單元之首。</p>';
 
-    // 性格側寫．處事風格
+    // 性格側寫．處事風格（每條先列依據、再下結論）
+    const yGZname = GAN[baziRes.pillars.year.gan] + ZHI[baziRes.pillars.year.zhi];
+    const zhiCh = ZHI[baziRes.pillars.year.zhi];
+    // 靈數計算過程
+    const dstr = String(y) + String(m).padStart(2, '0') + String(d).padStart(2, '0');
+    let lpChain = dstr.split('').join('+') + '=' + lp.steps[0];
+    for (let i = 0; i < lp.steps.length - 1; i++) {
+      lpChain += '，再 ' + String(lp.steps[i]).split('').join('+') + '=' + lp.steps[i + 1] + (lp.steps[i + 1] === lp.master ? '（卓越數）' : '');
+    }
+    // 外格算式
+    const chs = [...name], ss = state.strokes;
+    let waiFormula;
+    if (surname.length === 1 && given.length === 1) waiFormula = '單姓單名依例固定為 2';
+    else if (surname.length === 1) waiFormula = '名末字「' + chs[chs.length - 1] + '」' + ss[ss.length - 1] + ' 畫＋1';
+    else if (given.length === 1) waiFormula = '姓首字「' + chs[0] + '」' + ss[0] + ' 畫＋1';
+    else waiFormula = '姓首字「' + chs[0] + '」' + ss[0] + ' 畫＋名末字「' + chs[chs.length - 1] + '」' + ss[ss.length - 1] + ' 畫';
     const waiInfo = n81(grids.wai).info;
-    const waiLine = waiInfo.l === '吉' ? '外格 ' + grids.wai + ' 屬吉，外緣與貴人運佳，出外常有人相挺；' :
-      waiInfo.l === '凶' ? '外格 ' + grids.wai + ' 偏弱，社交上宜主動經營、慎選盟友；' :
-        '外格 ' + grids.wai + ' 吉凶參半，人脈重質不重量；';
+    const waiJudge = waiInfo.l === '吉' ? '所以你的外緣與貴人運天生不弱，出外常有人相挺' :
+      waiInfo.l === '凶' ? '所以社交上宜主動經營、慎選盟友，被動等待容易錯過人脈' :
+        '所以人脈運吉凶參半，經營重質不重量';
+    const copeParts = ZODIAC_COPE[zodiacKey].split('——');
     $('#r-persona').innerHTML =
       '<div class="c-grid">' +
-      '<div><label>核心性格</label>' + Z.icon + ' ' + Z.name + '：' + Z.trait + '<br>' + SX.icon + ' 屬' + sx.animal + '：' + SX.trait + '</div>' +
-      '<div><label>遇到事情的處理方式</label>' + ZODIAC_COPE[zodiacKey] + '</div>' +
-      '<div><label>做事與決策風格</label>靈數 ' + (lp.master || lp.final) + ' 號：' + NUM_WORK[lp.master || lp.final] + '<br>日主' + baziRes.dayMaster + GAN_ELEM[baziRes.dayMaster] + '：' + DM_STYLE[baziRes.dayMaster] + '。</div>' +
-      '<div><label>人際與外緣</label>' + waiLine + (blood !== '不知道' ? BLOOD[blood].match : '真誠是你最好的名片。') + '</div>' +
+      '<div><label>核心性格</label>' +
+      Z.icon + ' 你生於 ' + m + ' 月 ' + d + ' 日，正落在<b>' + Z.name + '</b>區間（' + Z.date + '），屬' + Z.elem + '象、守護星' + Z.ruler + '——所以' + Z.trait + '<br>' +
+      SX.icon + ' 出生年以立春換算為 ' + sx.baziYear + '（' + yGZname + '）年，地支「' + zhiCh + '」即<b>生肖屬' + sx.animal + '</b>——所以' + SX.trait + '</div>' +
+      '<div><label>遇到事情的處理方式</label>因為你是' + Z.elem + '象的' + Z.name + '，遇事的預設模式是「<b>' + copeParts[0] + '</b>」——' + (copeParts[1] || '') + '</div>' +
+      '<div><label>做事與決策風格</label>你的生日逐位相加：' + lpChain + '，得<b>生命靈數 ' + (lp.master ? lp.master + '／' + lp.final : lp.final) + ' 號</b>——所以' + NUM_WORK[lp.master || lp.final] + '<br>' +
+      '八字日柱排出「<b>' + GAN[baziRes.pillars.day.gan] + ZHI[baziRes.pillars.day.zhi] + '</b>」，日主天干' + baziRes.dayMaster + '屬' + GAN_ELEM[baziRes.dayMaster] + '——決策上' + DM_STYLE[baziRes.dayMaster] + '。</div>' +
+      '<div><label>人際與外緣</label>你的姓名外格＝' + waiFormula + '＝<b>' + grids.wai + '</b>，對照 81 數理第 ' + grids.wai + ' 數「' + waiInfo.n + '．' + waiInfo.l + '」——' + waiJudge + '。' +
+      (blood !== '不知道' ? '<br>再看血型 ' + blood + ' 型：' + BLOOD[blood].match : '') + '</div>' +
       '</div>';
 
     // 各月運勢
@@ -252,7 +272,8 @@
         '<div><label>健康</label>' + Z.h2.health + '</div></div>' });
     // 生肖
     cards.push({ id: 'sx', icon: SX.icon, title: '生肖運程．屬' + sx.animal, tag: '2026 丙午馬年．' + SX.rel + '（生肖以立春為界）',
-      html: '<p class="c-trait">' + SX.trait + '</p><p>' + SX.h2 + '</p>' });
+      html: '<p class="c-note">依據：' + REL_REASON[sx.animal] + '，故為「' + SX.rel + '」。</p>' +
+        '<p class="c-trait">' + SX.trait + '</p><p>' + SX.h2 + '</p>' });
     // 生命靈數
     const lpInfo = NUMEROLOGY[lp.master || lp.final];
     cards.push({ id: 'num', icon: '🔢', title: '生命靈數．' + (lp.master ? lp.master + '／' + lp.final : lp.final) + ' 號人', tag: lpInfo.key,
