@@ -402,7 +402,8 @@
       scores, bestName: ASPECT_NAME[best], bestScore: scores[best],
       cope1: ZODIAC_COPE[zodiacKey].split('——')[0], dm: baziRes.dayMaster + GAN_ELEM[baziRes.dayMaster], dmStyle: DM_STYLE[baziRes.dayMaster],
       lucky, tarotTxt: T.n + (tarot.upright ? '（正位）' : '（逆位）'), tarotAdv: T.adv,
-      missing: baziRes.missing.join('、') || '無', zH2: Z.h2.overall
+      missing: baziRes.missing.join('、') || '無', zH2: Z.h2.overall,
+      bestH2: Z.h2[{ wealth: 'money', love: 'love', career: 'career', health: 'health', social: 'overall' }[best]] || Z.h2.overall
     };
     pingResultCount();
   }
@@ -490,7 +491,7 @@
         ctx.fillStyle = '#f3e5c8'; ctx.font = '30px ' + F;
         y = wrapCanvasText(ctx, text, lx, y, maxW, 44) + 14;
       };
-      item('⭐ 最旺運勢', r.bestName + '（' + r.bestScore + ' 分）——' + r.zH2);
+      item('⭐ 最旺運勢', r.bestName + '（' + r.bestScore + ' 分）——' + r.bestH2);
       item('🧭 處事風格', r.cope1 + '；' + r.dmStyle + '。');
       item('🎨 開運指南', '缺' + r.missing + '｜' + r.lucky.color + '｜幸運數字 ' + r.lucky.nums + '｜吉方 ' + r.lucky.dir + '｜幸運月 ' + r.lucky.month);
       item('🃏 今日塔羅', r.tarotTxt + '——' + r.tarotAdv);
@@ -551,7 +552,7 @@
         const [nm, k] = x.split('|');
         return '<div><label>' + nm + '</label><b>' + r.scores[k] + '</b></div>';
       }).join('') + '</div>' +
-      '<div class="cp-line">⭐ 最旺：<b>' + r.bestName + '（' + r.bestScore + ' 分）</b>——' + esc(r.zH2) + '</div>' +
+      '<div class="cp-line">⭐ 最旺：<b>' + r.bestName + '（' + r.bestScore + ' 分）</b>——' + esc(r.bestH2) + '</div>' +
       '<div class="cp-line">🧭 處事風格：' + esc(r.cope1) + '；' + esc(r.dmStyle) + '。</div>' +
       '<div class="cp-line">🎨 開運：缺' + r.missing + '｜' + esc(r.lucky.color) + '｜數字 ' + esc(String(r.lucky.nums)) + '｜吉方 ' + r.lucky.dir + '｜幸運月 ' + r.lucky.month + '</div>' +
       '<div class="cp-line">🃏 今日塔羅：' + r.tarotTxt + '——' + esc(r.tarotAdv) + '</div>' +
