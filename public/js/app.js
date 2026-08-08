@@ -407,6 +407,119 @@
     pingResultCount();
   }
 
+  // ---------- 存成圖片（canvas 手繪命理圖卡） ----------
+  function wrapCanvasText(ctx, text, x, y, maxW, lh) {
+    let line = '', yy = y;
+    for (const ch of [...String(text)]) {
+      if (ctx.measureText(line + ch).width > maxW) { ctx.fillText(line, x, yy); yy += lh; line = ch; }
+      else line += ch;
+    }
+    if (line) { ctx.fillText(line, x, yy); yy += lh; }
+    return yy;
+  }
+  function rr(ctx, x, y, w, h, r) {
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+    else { ctx.beginPath(); ctx.rect(x, y, w, h); }
+  }
+  function saveImage() {
+    const r = lastResult;
+    if (!r) return;
+    try {
+      const W = 1080, H = 1700;
+      const cv = document.createElement('canvas');
+      cv.width = W; cv.height = H;
+      const ctx = cv.getContext('2d');
+      if (!ctx) throw new Error('no canvas');
+      const F = '"Noto Serif TC","PMingLiU","Microsoft JhengHei",serif';
+      // 背景與雙框
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#33100f'); bg.addColorStop(.5, '#24080a'); bg.addColorStop(1, '#170404');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = '#8a6a2f'; ctx.lineWidth = 2; ctx.strokeRect(36, 36, W - 72, H - 72);
+      ctx.strokeStyle = '#d9a441'; ctx.lineWidth = 3; ctx.strokeRect(48, 48, W - 96, H - 96);
+      ctx.strokeStyle = '#f2cd7b'; ctx.lineWidth = 5;
+      const cl = 34;
+      [[48, 48, 1, 1], [W - 48, 48, -1, 1], [48, H - 48, 1, -1], [W - 48, H - 48, -1, -1]].forEach(([x, y, sx, sy]) => {
+        ctx.beginPath(); ctx.moveTo(x, y + sy * cl); ctx.lineTo(x, y); ctx.lineTo(x + sx * cl, y); ctx.stroke();
+      });
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      // 印章
+      const sg = ctx.createLinearGradient(0, 105, 0, 225);
+      sg.addColorStop(0, '#c53a30'); sg.addColorStop(1, '#b3261e');
+      ctx.fillStyle = sg; rr(ctx, W / 2 - 60, 105, 120, 120, 14); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,233,201,.85)'; ctx.lineWidth = 3;
+      rr(ctx, W / 2 - 52, 113, 104, 104, 10); ctx.stroke();
+      ctx.fillStyle = '#ffe9c9'; ctx.font = 'bold 44px ' + F;
+      ctx.fillText('旺', W / 2, 143); ctx.fillText('來', W / 2, 192);
+      // 標題
+      ctx.fillStyle = '#f2cd7b'; ctx.font = '900 62px ' + F;
+      ctx.fillText('旺 來 開 運 所', W / 2, 302);
+      ctx.fillStyle = '#c8ab7d'; ctx.font = '26px ' + F;
+      ctx.fillText('線 上 命 理 分 析 ・ 命 理 精 簡 報 告', W / 2, 354);
+      // 姓名與生日
+      ctx.fillStyle = '#f2cd7b'; ctx.font = '900 74px ' + F;
+      ctx.fillText(r.name + ' ' + r.honorTxt, W / 2, 448);
+      ctx.fillStyle = '#c8ab7d'; ctx.font = '28px ' + F;
+      ctx.fillText('國曆 ' + r.ymd, W / 2, 502);
+      // 命理標籤兩行
+      ctx.fillStyle = '#e6c27a'; ctx.font = '32px ' + F;
+      ctx.fillText(r.zIcon + ' ' + r.zName + '（第' + r.decanN + '區間）　' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）', W / 2, 562);
+      ctx.fillText('靈數 ' + r.lpTxt + '（' + r.lpKey + '）　日主 ' + r.dm, W / 2, 612);
+      // 五運分數卡
+      const aspects = [['財運', 'wealth'], ['愛情', 'love'], ['事業', 'career'], ['健康', 'health'], ['貴人', 'social']];
+      const cw = 176, gap = 18, x0 = (W - (cw * 5 + gap * 4)) / 2, cy = 662, chh = 152;
+      aspects.forEach(([nm, k], i) => {
+        const x = x0 + i * (cw + gap);
+        ctx.strokeStyle = 'rgba(217,164,65,.5)'; ctx.lineWidth = 2;
+        rr(ctx, x, cy, cw, chh, 10); ctx.stroke();
+        ctx.fillStyle = '#d9a441'; ctx.font = '28px ' + F;
+        ctx.fillText(nm, x + cw / 2, cy + 36);
+        ctx.fillStyle = '#f2cd7b'; ctx.font = '900 58px ' + F;
+        ctx.fillText(String(r.scores[k]), x + cw / 2, cy + 92);
+        const st = Math.max(2, Math.round(r.scores[k] / 20));
+        ctx.fillStyle = '#d9a441'; ctx.font = '20px ' + F;
+        ctx.fillText('★'.repeat(st) + '☆'.repeat(5 - st), x + cw / 2, cy + 130);
+      });
+      // 內文
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      let y = cy + chh + 76;
+      const lx = 110, maxW = W - 220;
+      const item = (label, text) => {
+        ctx.fillStyle = '#d9a441'; ctx.font = 'bold 30px ' + F;
+        ctx.fillText(label, lx, y); y += 48;
+        ctx.fillStyle = '#f3e5c8'; ctx.font = '30px ' + F;
+        y = wrapCanvasText(ctx, text, lx, y, maxW, 44) + 14;
+      };
+      item('⭐ 最旺運勢', r.bestName + '（' + r.bestScore + ' 分）——' + r.zH2);
+      item('🧭 處事風格', r.cope1 + '；' + r.dmStyle + '。');
+      item('🎨 開運指南', '缺' + r.missing + '｜' + r.lucky.color + '｜幸運數字 ' + r.lucky.nums + '｜吉方 ' + r.lucky.dir + '｜幸運月 ' + r.lucky.month);
+      item('🃏 今日塔羅', r.tarotTxt + '——' + r.tarotAdv);
+      // 頁尾
+      ctx.textAlign = 'center';
+      ctx.strokeStyle = 'rgba(217,164,65,.4)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(150, H - 152); ctx.lineTo(W - 150, H - 152); ctx.stroke();
+      ctx.fillStyle = '#c8ab7d'; ctx.font = '26px ' + F;
+      ctx.fillText('完整報告 → ' + siteUrl().replace('https://', ''), W / 2, H - 112);
+      ctx.fillStyle = '#e6c27a'; ctx.font = 'bold 28px ' + F;
+      ctx.fillText('by 旺來 wowwow31001（Threads）🍍', W / 2, H - 68);
+      // 輸出：手機優先原生分享，其餘直接下載
+      cv.toBlob(async (blob) => {
+        if (!blob) { toast('圖片產生失敗，請改用列印功能'); return; }
+        const fname = '旺來開運所_命理報告_' + r.name + '.png';
+        const file = new File([blob], fname, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: '旺來開運所．命理報告' }); return; } catch (e) { /* 使用者取消則續走下載 */ }
+        }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fname;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        toast('圖片已下載！');
+      }, 'image/png');
+    } catch (e) { toast('此瀏覽器不支援圖片產生，請改用列印功能'); }
+  }
+
   // ---------- 精簡版 ----------
   function buildCompactText() {
     const r = lastResult;
@@ -472,6 +585,8 @@
       $('#f-name').focus();
     };
     $('#btn-print').onclick = () => window.print();
+    $('#btn-image').onclick = saveImage;
+    $('#compact-image').onclick = saveImage;
     $('#btn-share-intro').onclick = doShare;
     $('#btn-share').onclick = doShare;
     $('#btn-compact').onclick = openCompact;
