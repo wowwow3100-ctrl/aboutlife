@@ -1,4 +1,4 @@
-// 玄機閣．線上命理分析 — 零依賴 Node.js 伺服器（靜態網站 + 瀏覽統計 API）
+// 旺來開運所．線上命理分析 — 零依賴 Node.js 伺服器（靜態網站 + 瀏覽統計 API）
 // 啟動：node server.js   （或雙擊 啟動網站.bat）
 const http = require('http');
 const fs = require('fs');
@@ -136,7 +136,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   const nets = require('os').networkInterfaces();
   console.log('==============================================');
-  console.log('  玄機閣．線上命理分析  已啟動');
+  console.log('  旺來開運所．線上命理分析  已啟動');
   console.log('  本機開啟：http://localhost:' + PORT);
   for (const name of Object.keys(nets)) for (const n of nets[name]) {
     if (n.family === 'IPv4' && !n.internal) console.log('  區網分享：http://' + n.address + ':' + PORT);

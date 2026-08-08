@@ -1,8 +1,8 @@
-// ============ 玄機閣．命理內容資料庫（一）============
+// ============ 旺來開運所．命理內容資料庫（一）============
 // 星座、生肖、生命靈數、血型、誕生石、生日數、八字五行
 
 const SITE = {
-  name: '玄機閣', sub: '線上命理分析', year: 2026, yearGZ: '丙午', yearAnimal: '馬',
+  name: '旺來開運所', sub: '線上命理分析', year: 2026, yearGZ: '丙午', yearAnimal: '馬',
   author: '旺來', authorHandle: 'wowwow31001', authorUrl: 'https://www.threads.com/@wowwow31001',
   publicUrl: 'https://aboutlife-production.up.railway.app'
 };

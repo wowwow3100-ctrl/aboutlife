@@ -1,4 +1,4 @@
-// ============ 玄機閣．介面流程 ============
+// ============ 旺來開運所．介面流程 ============
 (function () {
   const $ = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
@@ -139,7 +139,7 @@
   }
 
   // ---------- 排盤 ----------
-  const LOAD_LINES = ['正在焚香淨手…', '推算生辰節氣…', '換算農曆生辰…', '排列三才五格…', '對照八十一數理…', '安紫微十四主星…', '推算太陽閘門…', '觀星測影，推演流年…', '玄機將現，請稍候…'];
+  const LOAD_LINES = ['正在焚香淨手…', '推算生辰節氣…', '換算農曆生辰…', '排列三才五格…', '對照八十一數理…', '安紫微十四主星…', '推算太陽閘門…', '觀星測影，推演流年…', '天機將現，請稍候…'];
   function startAnalyze() {
     show('#screen-loading');
     let i = 0;
@@ -165,10 +165,10 @@
   }
   function doShare() {
     const url = siteUrl();
-    let text = '玄機閣．線上命理分析｜星座×生肖×姓名學×生命靈數×八字五行，一次看懂 2026 下半年財運、愛情、事業！';
-    if (lastResult) text = '我在「玄機閣」測了 2026 下半年運勢，' + lastResult.bestName + '拿了 ' + lastResult.bestScore + ' 分！你也來算算～';
+    let text = '旺來開運所．線上命理分析｜星座×生肖×姓名學×生命靈數×八字五行，一次看懂 2026 下半年財運、愛情、事業！';
+    if (lastResult) text = '我在「旺來開運所」測了 2026 下半年運勢，' + lastResult.bestName + '拿了 ' + lastResult.bestScore + ' 分！你也來算算～';
     if (navigator.share) {
-      navigator.share({ title: '玄機閣．線上命理分析', text, url }).catch(() => {});
+      navigator.share({ title: '旺來開運所．線上命理分析', text, url }).catch(() => {});
     } else {
       copyText(text + '\n' + url).then(() => toast('分享文字已複製，貼給朋友吧！'));
     }
@@ -412,7 +412,7 @@
     const r = lastResult;
     if (!r) return '';
     return [
-      '🏮 玄機閣．命理精簡報告',
+      '🏮 旺來開運所．命理精簡報告',
       r.name + ' ' + r.honorTxt + '｜國曆 ' + r.ymd,
       r.zIcon + ' ' + r.zName + '｜' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）｜靈數 ' + r.lpTxt + '（' + r.lpKey + '）｜日主 ' + r.dm,
       '── 2026 下半年五運 ──',
@@ -430,7 +430,7 @@
     const r = lastResult;
     if (!r) return;
     $('#compact-body').innerHTML =
-      '<div class="cp-title">🏮 玄機閣．命理精簡報告</div>' +
+      '<div class="cp-title">🏮 旺來開運所．命理精簡報告</div>' +
       '<div class="cp-name">' + esc(r.name) + ' ' + r.honorTxt + '<span>國曆 ' + r.ymd + '</span></div>' +
       '<div class="cp-chips"><span>' + r.zIcon + ' ' + r.zName + '（' + r.decanN + '區）</span><span>' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）</span><span>靈數 ' + r.lpTxt + '</span><span>日主 ' + r.dm + '</span></div>' +
       '<div class="cp-scores">' +
