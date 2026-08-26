@@ -116,7 +116,8 @@
   function validateStep() {
     if (state.step === 0) {
       const name = $('#f-name').value.trim();
-      if (!/^[㐀-鿿]{2,6}$/.test(name)) { toast('請輸入 2–6 個中文字的姓名'); return false; }
+      if (!name) { state.name = ''; state.strokes = []; return true; } // 姓名選填，不填則略過姓名學
+      if (!/^[㐀-鿿]{2,6}$/.test(name)) { toast('姓名請輸入 2–6 個中文字，或留空略過姓名學'); return false; }
       const ins = [...$$('.stroke-in')];
       const strokes = ins.map(x => parseInt(x.value, 10));
       if (strokes.some(v => !v || v < 1 || v > 64)) { toast('有字查無筆畫，請手動填寫'); return false; }
@@ -176,14 +177,16 @@
 
   function renderResult() {
     const { name, y, m, d, hourIdx, lateZi, blood } = state;
-    const { surname, given } = splitName(name);
+    const hasName = !!name;
+    const dispName = hasName ? name : '有緣人';
+    const { surname, given } = hasName ? splitName(name) : { surname: '', given: '' };
     const zodiacKey = getZodiac(m, d);
     const Z = ZODIAC[zodiacKey];
     const sx = getShengxiao(y, m, d, hourIdx == null ? 12 : (hourIdx === 0 && lateZi ? 23 : (hourIdx === 0 ? 0 : hourIdx * 2 - 1)), 30);
     const SX = SHENGXIAO[sx.animal];
     const lp = lifePath(y, m, d);
     const py = personalYear(m, d, 2026);
-    const grids = fiveGrids(surname, given, state.strokes);
+    const grids = hasName ? fiveGrids(surname, given, state.strokes) : null;
     const baziRes = bazi(y, m, d, hourIdx, lateZi);
     const seedStr = name + '|' + y + '-' + m + '-' + d;
     const profile = { name, y, m, d, zodiacKey, animal: sx.animal, lp, grids, baziRes, hourIdx, blood, seedStr };
@@ -197,7 +200,7 @@
 
     // 頭牌
     $('#r-head').innerHTML =
-      '<div class="r-name">' + esc(name) + ' ' + honor() + '</div>' +
+      '<div class="r-name">' + esc(dispName) + (hasName ? ' ' + honor() : '') + '</div>' +
       '<div class="r-meta">' +
       '<span>國曆 ' + y + ' 年 ' + m + ' 月 ' + d + ' 日</span>' +
       '<span>' + Z.icon + ' ' + Z.name + '</span>' +
@@ -227,7 +230,7 @@
         SX.relLevel === 1 ? '生肖得比旺之力，氣勢正盛' :
           SX.relLevel === -1 ? '生肖逢' + SX.rel + '，凡事白紙黑字、少口舌' : '生肖平順，走實力運';
     $('#r-summary').innerHTML =
-      '<p><b>' + esc(given) + '</b>' + honor() + '，你的生命靈數為 <b>' + (lp.master ? lp.master + '（卓越數）' : lp.final) + ' 號</b>——' + NUMEROLOGY[lp.master || lp.final].key + '；2026 流年數 <b>' + py + '</b>，' + PERSONAL_YEAR[py] + '</p>' +
+      '<p><b>' + esc(hasName ? given : '有緣人') + '</b>' + (hasName ? honor() : '') + '，你的生命靈數為 <b>' + (lp.master ? lp.master + '（卓越數）' : lp.final) + ' 號</b>——' + NUMEROLOGY[lp.master || lp.final].key + '；2026 流年數 <b>' + py + '</b>，' + PERSONAL_YEAR[py] + '</p>' +
       '<p>丙午馬年下半年，' + relNote + '。五大運勢中以「<b>' + ASPECT_NAME[best] + '</b>」最為突出（' + scores[best] + ' 分），' + Z.name + '的你' + Z.h2.overall + '</p>' +
       '<p class="r-focus-tip">你最想了解的「' + ($('.focus-chip.sel') ? $('.focus-chip.sel').textContent.trim() : '整體') + '」詳解，已為你排在下方各單元之首。</p>';
 
@@ -240,17 +243,23 @@
     for (let i = 0; i < lp.steps.length - 1; i++) {
       lpChain += '，再 ' + String(lp.steps[i]).split('').join('+') + '=' + lp.steps[i + 1] + (lp.steps[i + 1] === lp.master ? '（卓越數）' : '');
     }
-    // 外格算式
-    const chs = [...name], ss = state.strokes;
-    let waiFormula;
-    if (surname.length === 1 && given.length === 1) waiFormula = '單姓單名依例固定為 2';
-    else if (surname.length === 1) waiFormula = '名末字「' + chs[chs.length - 1] + '」' + ss[ss.length - 1] + ' 畫＋1';
-    else if (given.length === 1) waiFormula = '姓首字「' + chs[0] + '」' + ss[0] + ' 畫＋1';
-    else waiFormula = '姓首字「' + chs[0] + '」' + ss[0] + ' 畫＋名末字「' + chs[chs.length - 1] + '」' + ss[ss.length - 1] + ' 畫';
-    const waiInfo = n81(grids.wai).info;
-    const waiJudge = waiInfo.l === '吉' ? '所以你的外緣與貴人運天生不弱，出外常有人相挺' :
-      waiInfo.l === '凶' ? '所以社交上宜主動經營、慎選盟友，被動等待容易錯過人脈' :
-        '所以人脈運吉凶參半，經營重質不重量';
+    // 外格算式（未填姓名則略過）
+    let waiLine = '';
+    if (hasName) {
+      const chs = [...name], ss = state.strokes;
+      let waiFormula;
+      if (surname.length === 1 && given.length === 1) waiFormula = '單姓單名依例固定為 2';
+      else if (surname.length === 1) waiFormula = '名末字「' + chs[chs.length - 1] + '」' + ss[ss.length - 1] + ' 畫＋1';
+      else if (given.length === 1) waiFormula = '姓首字「' + chs[0] + '」' + ss[0] + ' 畫＋1';
+      else waiFormula = '姓首字「' + chs[0] + '」' + ss[0] + ' 畫＋名末字「' + chs[chs.length - 1] + '」' + ss[ss.length - 1] + ' 畫';
+      const waiInfo = n81(grids.wai).info;
+      const waiJudge = waiInfo.l === '吉' ? '所以你的外緣與貴人運天生不弱，出外常有人相挺' :
+        waiInfo.l === '凶' ? '所以社交上宜主動經營、慎選盟友，被動等待容易錯過人脈' :
+          '所以人脈運吉凶參半，經營重質不重量';
+      waiLine = '你的姓名外格＝' + waiFormula + '＝<b>' + grids.wai + '</b>，對照 81 數理第 ' + grids.wai + ' 數「' + waiInfo.n + '．' + waiInfo.l + '」——' + waiJudge + '。';
+    } else {
+      waiLine = '未填姓名，無法推外格人脈數；';
+    }
     const copeParts = ZODIAC_COPE[zodiacKey].split('——');
     $('#r-persona').innerHTML =
       '<div class="c-grid">' +
@@ -260,8 +269,8 @@
       '<div><label>遇到事情的處理方式</label>因為你是' + Z.elem + '象的' + Z.name + '，遇事的預設模式是「<b>' + copeParts[0] + '</b>」——' + (copeParts[1] || '') + '</div>' +
       '<div><label>做事與決策風格</label>你的生日逐位相加：' + lpChain + '，得<b>生命靈數 ' + (lp.master ? lp.master + '／' + lp.final : lp.final) + ' 號</b>——所以' + NUM_WORK[lp.master || lp.final] + '<br>' +
       '八字日柱排出「<b>' + GAN[baziRes.pillars.day.gan] + ZHI[baziRes.pillars.day.zhi] + '</b>」，日主天干' + baziRes.dayMaster + '屬' + GAN_ELEM[baziRes.dayMaster] + '——決策上' + DM_STYLE[baziRes.dayMaster] + '。</div>' +
-      '<div><label>人際與外緣</label>你的姓名外格＝' + waiFormula + '＝<b>' + grids.wai + '</b>，對照 81 數理第 ' + grids.wai + ' 數「' + waiInfo.n + '．' + waiInfo.l + '」——' + waiJudge + '。' +
-      (blood !== '不知道' ? '<br>再看血型 ' + blood + ' 型：' + BLOOD[blood].match : '') + '</div>' +
+      '<div><label>人際與外緣</label>' + waiLine +
+      (blood !== '不知道' ? (hasName ? '<br>再看' : '') + '血型 ' + blood + ' 型：' + BLOOD[blood].match : (hasName ? '' : '真誠是你最好的名片。')) + '</div>' +
       '</div>';
 
     // 各月運勢（附推導依據）
@@ -314,6 +323,11 @@
       html: '<p class="c-trait">' + d + ' 日出生的你——' + DAYNUM[d] + '</p>' +
         '<p>誕生石「' + BIRTHSTONE[m - 1].split('．')[0] + '」象徵' + BIRTHSTONE[m - 1].split('．')[1] + '，佩戴或擺放皆能安定心神、放大你的本命能量。</p>' });
     // 姓名學
+    if (!hasName) {
+      cards.push({ id: 'name', icon: '✍️', title: '姓名學．三才五格', tag: '未填姓名',
+        html: '<p class="c-trait">姓名學以中文姓名的康熙筆畫推算三才五格與 81 數理，解讀性格核心、基礎運與人脈外緣。</p>' +
+          '<p class="c-note">你這次未填姓名，已略過此項分析。點「重算」補上中文姓名即可解鎖，其他分析不受影響。</p>' });
+    } else {
     const gridRows = [['天格', grids.tian, '祖蔭與長上緣'], ['人格', grids.ren, '主運．性格核心'], ['地格', grids.di, '基礎運．36歲前'], ['外格', grids.wai, '外緣與社交'], ['總格', grids.zong, '總運．中晚年']];
     let gtable = '<table class="grid-table"><tr><th>五格</th><th>數理</th><th>吉凶</th><th>意涵</th></tr>';
     for (const [gname, num, meaning] of gridRows) {
@@ -328,6 +342,7 @@
       html: gtable +
         '<div class="sancai-box"><div class="sancai-combo">三才配置：' + sc.combo + '<span class="luck-badge ' + sc.cls + '">' + sc.label + '</span></div><p>' + sc.desc + '</p></div>' +
         '<p class="c-note">＊筆畫依康熙字典並含數字慣例（四=4、五=5…），各流派或有一二畫之差，可回上一步微調。</p>' });
+    }
     // 八字五行
     const POS_NAME = { year: '年柱', month: '月柱', day: '日柱', hour: '時柱' };
     let btable = '<div class="bazi-pillars">';
@@ -396,7 +411,7 @@
       '<div class="sys-body">' + c.html + '</div></section>').join('');
 
     lastResult = {
-      name, honorTxt: honor(), ymd: y + '/' + m + '/' + d,
+      name: dispName, honorTxt: hasName ? honor() : '', ymd: y + '/' + m + '/' + d,
       zName: Z.name, zIcon: Z.icon, decanN: decan.n, animal: sx.animal, sxIcon: SX.icon, sxRel: SX.rel,
       lpTxt: (lp.master ? lp.master + '/' + lp.final : String(lp.final)), lpKey: NUMEROLOGY[lp.master || lp.final].key, py,
       scores, bestName: ASPECT_NAME[best], bestScore: scores[best],

@@ -307,8 +307,8 @@ function computeScores(profile) {
   const scores = {};
   const sx = SHENGXIAO[animal];
   const zElem = ZODIAC[zodiacKey].elem;
-  const zongLuck = n81(grids.zong).info.l;
-  const renLuck = n81(grids.ren).info.l;
+  const zongLuck = grids ? n81(grids.zong).info.l : null;
+  const renLuck = grids ? n81(grids.ren).info.l : null;
   for (const a of aspects) {
     const rng = mulberry32(seedHash(seed + '#' + a));
     let v = 58 + rng() * 30;
