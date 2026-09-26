@@ -65,6 +65,58 @@ function onlineCount() {
   return n;
 }
 
+// ---------- AI 命理師解讀（Anthropic Claude API） ----------
+// Railway Variables 設定：ANTHROPIC_API_KEY（必填）、AI_MODEL（選填）、AI_DAILY_LIMIT（選填，預設 300 次/日）
+const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-5';
+const AI_DAILY_LIMIT = parseInt(process.env.AI_DAILY_LIMIT || '300', 10);
+const aiCache = new Map();          // 同一命盤同一天只算一次
+const aiIpHits = {};                // 每 IP 每小時上限
+let aiDay = '', aiDayCount = 0;
+const AI_SYSTEM = [
+  '你是「旺來開運所」的資深命理師，精通《子平真詮》《滴天髓》《窮通寶鑑》《三命通會》《紫微斗數全書》與西洋占星。',
+  '使用者會提供一份已由程式依古法排好的命盤資料（八字十神、格局、旺衰、用神、大運、紫微主星與四化、星座與 2026 下半年行運等）。',
+  '請只根據提供的資料解讀，不可自行更改或捏造命盤內容；資料沒有的就不要編。',
+  '用台灣繁體中文，風格「專業典雅＋白話解釋」：先用命理術語下判斷，緊接一句白話說明。',
+  '輸出結構固定為以下五段，每段以【標題】開頭：',
+  '【命格總評】綜合八字格局、旺衰與紫微命宮，點出此人一生的核心特質與優勢（約 150 字）。',
+  '【個性與處事】遇到事情的處理方式、決策習慣、人際互動與盲點（約 150 字）。',
+  '【2026 下半年運勢】分財運、感情、事業、健康四小點，結合丙午流年十神、流年四化與行運（約 250 字）。',
+  '【開運建議】3 條具體可執行的建議，對應其用神五行（約 120 字）。',
+  '【一句話送你】一句溫暖有力量的結語。',
+  '注意：語氣正向但誠實，凶象要說但給出化解方向；不提供醫療診斷、投資標的或保證性預言；結尾不要再加免責聲明。'
+].join('\n');
+
+function handleAI(req, res, body) {
+  const send = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(obj)); };
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return send(503, { error: 'AI 解讀尚未開通' });
+  let chart = '';
+  try { chart = String(JSON.parse(body || '{}').chart || '').slice(0, 5000); } catch (e) {}
+  if (chart.length < 50) return send(400, { error: '命盤資料不足' });
+  const today = todayStr();
+  const cacheKey = today + '|' + require('crypto').createHash('sha1').update(chart).digest('hex');
+  if (aiCache.has(cacheKey)) return send(200, { text: aiCache.get(cacheKey), cached: true });
+  if (aiDay !== today) { aiDay = today; aiDayCount = 0; }
+  if (aiDayCount >= AI_DAILY_LIMIT) return send(429, { error: '今日 AI 解讀名額已滿，明天再來' });
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  const hour = Math.floor(Date.now() / 3600000);
+  const rec = aiIpHits[ip];
+  if (rec && rec.h === hour && rec.n >= 5) return send(429, { error: '解讀次數太頻繁，請一小時後再試' });
+  aiIpHits[ip] = rec && rec.h === hour ? { h: hour, n: rec.n + 1 } : { h: hour, n: 1 };
+  aiDayCount++;
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: AI_MODEL, max_tokens: 1800, system: AI_SYSTEM, messages: [{ role: 'user', content: '以下是命盤資料，請依規定格式解讀：\n' + chart }] })
+  }).then(r => r.json().then(j => ({ ok: r.ok, j }))).then(({ ok, j }) => {
+    if (!ok) { console.log('AI 錯誤', JSON.stringify(j).slice(0, 300)); aiDayCount--; return send(502, { error: 'AI 服務暫時無法使用' }); }
+    const text = (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('\n').trim();
+    if (aiCache.size > 2000) aiCache.clear();
+    aiCache.set(cacheKey, text);
+    send(200, { text });
+  }).catch(e => { console.log('AI 連線失敗', e.message); aiDayCount--; send(502, { error: 'AI 服務連線失敗' }); });
+}
+
 // ---------- 靜態檔案 ----------
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -96,6 +148,17 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ ok: 1, total: stats.total, online: onlineCount() }));
     });
+    return;
+  }
+  if (p === '/api/ai/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ enabled: !!process.env.ANTHROPIC_API_KEY, model: AI_MODEL }));
+    return;
+  }
+  if (p === '/api/ai' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 8000) req.destroy(); });
+    req.on('end', () => handleAI(req, res, body));
     return;
   }
   if (p === '/api/ping' && req.method === 'POST') {

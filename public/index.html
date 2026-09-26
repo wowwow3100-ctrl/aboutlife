@@ -26,13 +26,14 @@
       <div class="hero">
         <div class="hero-frame"><span class="corner"></span>
           <h2>天機藏於生辰，命名載於筆畫</h2>
-          <p class="lead">填寫姓名與生辰，旺來開運所為你合參八大命理系統，</p>
+          <p class="lead">填寫姓名與生辰，旺來開運所依古籍法則合參十大命理系統，</p>
           <p class="lead">細解 <b style="color:var(--gold-bright)">2026 丙午馬年下半年</b> 的財運、愛情、事業與健康。</p>
           <p class="lead-dim">觀命不改命，知運而用運——結果僅供參考，人生仍由你主筆。</p>
           <div class="sys-icons">
             <span>♈ 西洋星座</span><span>🐴 生肖運程</span><span>✍️ 姓名學三才五格</span>
             <span>🔢 生命靈數</span><span>☯️ 八字五行</span><span>🎂 生日密碼</span>
-            <span>🩸 血型分析</span><span>🃏 每日塔羅</span>
+            <span>👑 紫微斗數</span><span>🔯 人類圖</span>
+            <span>🩸 血型分析</span><span>🃏 每日塔羅</span><span>✨ AI 命理師</span>
           </div>
           <button class="btn-gold" id="btn-start">開 始 問 命</button>
           <div style="margin-top:14px"><button class="btn-ghost" id="btn-share-intro">🔗 分享給朋友</button></div>
@@ -41,8 +42,8 @@
           <details class="explain">
             <summary>本站如何分析與統計？</summary>
             <div class="explain-body">
-              <p><b>怎麼分析：</b>你填的姓名與生辰會以八大命理系統「合參」——星座依出生日期界線判定；生肖與八字年柱依<b>立春</b>為界（非農曆除夕）；姓名學採<b>康熙字典筆畫</b>推三才五格與 81 數理；八字以內建 1924–2033 節氣表排年月日時四柱、統計五行強弱與喜用；生命靈數取生日數字根、流年數對應 2026。各面向分數由上述系統加權合成，同一個人同一天算出的結果<b>固定不變</b>（每日塔羅每天更換），不是隨機亂數。</p>
-              <p><b>怎麼統計：</b>首頁的「香客足跡」由伺服器記錄瀏覽次數與匿名裝置資訊；你填寫的<b>姓名與生日只在你的瀏覽器裡計算，不會上傳</b>。</p>
+              <p><b>怎麼分析：</b>你填的姓名與生辰會以八大命理系統「合參」——星座依出生日期界線判定；生肖與八字年柱依<b>立春</b>為界（非農曆除夕）；姓名學採<b>康熙字典筆畫</b>推三才五格與 81 數理；八字以內建 1924–2033 節氣表排四柱，再依《子平真詮》取格局、《滴天髓》以藏干與月令論旺衰、《窮通寶鑑》論調候用神，並排出大運流年；紫微斗數依《紫微斗數全書》安十四主星、六吉六煞與四化；生命靈數取生日數字根、流年數對應 2026。各面向分數由上述系統加權合成，同一個人同一天算出的結果<b>固定不變</b>（每日塔羅每天更換），不是隨機亂數。</p>
+              <p><b>怎麼統計：</b>首頁的「香客足跡」由伺服器記錄瀏覽次數與匿名裝置資訊；你填寫的<b>姓名與生日只在你的瀏覽器裡計算，不會上傳</b>；若按下「AI 命理師解讀」，只會傳送排好的命盤術語資料，不含姓名與生日。</p>
               <p><b>提醒：</b>命理為千年統計與經驗之學，結果僅供娛樂與自我探索參考——觀命不改命，知運而用運。</p>
             </div>
           </details>
@@ -172,6 +173,29 @@
 
       <div id="r-cards"></div>
 
+      <!-- AI 命理師 -->
+      <div class="r-section ai-box" id="r-ai" style="display:none">
+        <h2>AI 命理師．深度解讀</h2>
+        <div class="inner">
+          <p class="c-note">由 Claude 最新 AI 模型，依你上方已排好的八字、紫微與星象資料，綜合古籍法則寫成個人化解讀。只傳送命盤資料，不含姓名與生日。</p>
+          <div style="text-align:center;margin:14px 0"><button class="btn-gold" id="btn-ai" style="font-size:17px;padding:12px 34px">✨ 請 AI 命理師深度解讀</button></div>
+          <div id="ai-out" class="ai-out"></div>
+        </div>
+      </div>
+
+      <!-- 參考書目 -->
+      <div class="r-section">
+        <h2>參考書目與演算依據</h2>
+        <div class="inner biblio">
+          <p><b>八字</b>：《子平真詮》（格局取月令）、《滴天髓》（旺衰）、《窮通寶鑑》（調候）、《三命通會》（十神、納音）、《淵海子平》（大運起法）</p>
+          <p><b>紫微斗數</b>：《紫微斗數全書》（安星訣、十二宮、生年／流年四化、六吉六煞）</p>
+          <p><b>姓名學</b>：熊崎健翁《姓名之神祕》五格剖象法、81 數理；筆畫依《康熙字典》</p>
+          <p><b>西洋占星</b>：黃道十二宮三區間（Decan）、2026 行星星曆（木星入獅子、土星牡羊逆行、水星逆行）</p>
+          <p><b>人類圖</b>：Ra Uru Hu《The Definitive Book of Human Design》曼陀羅閘門序</p>
+          <p class="c-note">以上為旺來整理古籍規則後以程式演算；各門派說法不一，命理為傳統術數，結果僅供參考與自我探索。</p>
+        </div>
+      </div>
+
       <div class="result-actions">
         <button class="btn-ghost" id="btn-redo">↺ 重算</button>
         <button class="btn-ghost" id="btn-friend">👥 幫朋友算</button>
@@ -215,6 +239,7 @@
   <script src="js/content2.js"></script>
   <script src="js/content3.js"></script>
   <script src="js/fortune.js"></script>
+  <script src="js/classic.js"></script>
   <script src="js/app.js"></script>
   <script>
     // 金箔粒子

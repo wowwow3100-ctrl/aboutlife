@@ -188,6 +188,10 @@
     const py = personalYear(m, d, 2026);
     const grids = hasName ? fiveGrids(surname, given, state.strokes) : null;
     const baziRes = bazi(y, m, d, hourIdx, lateZi);
+    // 以古籍法（藏干＋月令加權、調候）取代簡易身強弱與喜用
+    const bd = baziDeep(baziRes, y, m, d, hourIdx, lateZi, state.gender);
+    baziRes.strong = bd.strong;
+    baziRes.favorable = bd.fav;
     const seedStr = name + '|' + y + '-' + m + '-' + d;
     const profile = { name, y, m, d, zodiacKey, animal: sx.animal, lp, grids, baziRes, hourIdx, blood, seedStr };
     const scores = computeScores(profile);
@@ -196,6 +200,7 @@
     const tarot = tarotDraw(seedStr);
     const lun = solar2lunar(y, m, d);
     const zw = ziwei(lun, hourIdx);
+    const zd = ziweiDeep(zw, lun, hourIdx);
     const hd = sunGate(y, m, d, hourIdx == null ? null : (hourIdx === 0 && lateZi ? 23 : (hourIdx === 0 ? 0 : hourIdx * 2 - 1)));
 
     // 頭牌
@@ -307,7 +312,8 @@
         '<div><label>愛情</label>' + Z.h2.love + '</div>' +
         '<div><label>財運</label>' + Z.h2.money + '</div>' +
         '<div><label>事業</label>' + Z.h2.career + '</div>' +
-        '<div><label>健康</label>' + Z.h2.health + '</div></div>' });
+        '<div><label>健康</label>' + Z.h2.health + '</div></div>' +
+        (transitNotes(zodiacKey).length ? '<div class="c-grid" style="margin-top:10px"><div><label>2026 下半年行運依據</label>' + transitNotes(zodiacKey).join('<br>') + cite('astro') + '</div></div>' : '') });
     // 生肖
     cards.push({ id: 'sx', icon: SX.icon, title: '生肖運程．屬' + sx.animal, tag: '2026 丙午馬年．' + SX.rel + '（生肖以立春為界）',
       html: '<p class="c-note">依據：' + REL_REASON[sx.animal] + '，故為「' + SX.rel + '」。</p>' +
@@ -341,12 +347,19 @@
     cards.push({ id: 'name', icon: '✍️', title: '姓名學．三才五格', tag: '「' + esc(name) + '」筆畫 ' + state.strokes.join('・'),
       html: gtable +
         '<div class="sancai-box"><div class="sancai-combo">三才配置：' + sc.combo + '<span class="luck-badge ' + sc.cls + '">' + sc.label + '</span></div><p>' + sc.desc + '</p></div>' +
-        '<p class="c-note">＊筆畫依康熙字典並含數字慣例（四=4、五=5…），各流派或有一二畫之差，可回上一步微調。</p>' });
+        '<p class="c-note">＊筆畫依康熙字典並含數字慣例（四=4、五=5…），各流派或有一二畫之差，可回上一步微調。' + cite('xq') + '</p>' });
     }
     // 八字五行
     const POS_NAME = { year: '年柱', month: '月柱', day: '日柱', hour: '時柱' };
     let btable = '<div class="bazi-pillars">';
-    for (const c of baziRes.chars) btable += '<div class="pillar"><label>' + POS_NAME[c.pos] + '</label><div class="pillar-gz">' + c.gz + '</div><div class="pillar-elem">' + GAN_ELEM[c.gz[0]] + '．' + ZHI_ELEM[c.gz[1]] + '</div></div>';
+    for (const c of baziRes.chars) {
+      const st = bd.tgStem.find(s => s.pos === c.pos);
+      const hd2 = bd.tgHidden.find(s => s.pos === c.pos);
+      btable += '<div class="pillar"><label>' + POS_NAME[c.pos] + '</label>' +
+        '<div class="pillar-tg">' + (st ? st.tg : '') + '</div>' +
+        '<div class="pillar-gz">' + c.gz + '</div><div class="pillar-elem">' + GAN_ELEM[c.gz[0]] + '．' + ZHI_ELEM[c.gz[1]] + '</div>' +
+        '<div class="pillar-cang">藏 ' + (hd2 ? hd2.list.map(x => x.g + '<small>' + x.tg + '</small>').join(' ') : '') + '</div></div>';
+    }
     btable += '</div>';
     let ebars = '<div class="elem-bars">';
     const maxC = Math.max(...Object.values(baziRes.counts), 1);
@@ -354,12 +367,31 @@
       ebars += '<div class="elem-row"><span class="elem-name e-' + e + '">' + e + '</span><div class="elem-track"><div class="elem-fill e-' + e + '" style="width:' + (baziRes.counts[e] / maxC * 100) + '%"></div></div><span class="elem-cnt">' + baziRes.counts[e] + '</span></div>';
     }
     ebars += '</div>';
-    cards.push({ id: 'bazi', icon: '☯️', title: '八字五行．日主' + baziRes.dayMaster + GAN_ELEM[baziRes.dayMaster], tag: (baziRes.hourKnown ? '四柱八字' : '三柱六字（未填時辰）') + '．身' + (baziRes.strong ? '強' : '弱'),
+    const dmCh = baziRes.dayMaster;
+    let dayunHtml = '';
+    if (bd.dayun) {
+      const du = bd.dayun;
+      dayunHtml = '<div><label>大運．' + (du.forward ? '順行' : '逆行') + '，' + du.startAge + ' 歲起運</label>' +
+        '<div class="dayun-row">' + du.seq.map(s => '<span class="dayun' + (du.cur && du.cur.gz === s.gz ? ' cur' : '') + '"><b>' + s.gz + '</b><small>' + s.from + '–' + s.to + '歲</small><small>' + s.tg + '</small></span>').join('') + '</div>' +
+        (du.cur ? '目前行「<b>' + du.cur.gz + '</b>」大運（' + du.cur.from + '–' + du.cur.to + ' 歲），天干為' + du.cur.tg + '——' + TG_PLAIN[du.cur.tg] + '是這十年的主旋律。' : '尚未起運，以流年論為主。') +
+        cite('yh') + '</div>';
+    } else {
+      dayunHtml = '<div><label>大運</label>大運需依性別判斷順逆，你選了「保密」，此項略過。' + '</div>';
+    }
+    cards.push({ id: 'bazi', icon: '☯️', title: '八字命盤．日主' + dmCh + GAN_ELEM[dmCh] + '．' + bd.geju, tag: (baziRes.hourKnown ? '四柱八字' : '三柱六字（未填時辰）') + '．' + bd.level + '．年命納音「' + bd.nayin + '」',
       html: btable + ebars +
-        '<p class="c-trait">' + DAYMASTER[baziRes.dayMaster] + '</p>' +
-        '<p>五行以「<b>' + baziRes.maxElem + '</b>」最旺' +
-        (baziRes.missing.length ? '，命中較缺「<b>' + baziRes.missing.join('、') + '</b>」，日常可藉' + baziRes.missing.map(e => ELEM_INFO[e].color.split('、')[0]).join('與') + '色系補氣' : '，五行俱全，是難得的均衡之命') +
-        '。日主身' + (baziRes.strong ? '強，喜洩不喜扶，宜多付出、多創造，「' + baziRes.favorable.join('、') + '」是你的開運五行' : '弱，喜生扶，「' + baziRes.favorable.join('、') + '」是你的開運五行，多親近相應的顏色與方位') + '。</p>' +
+        '<p class="c-trait">' + DAYMASTER[dmCh] + '</p>' +
+        '<div class="c-grid">' +
+        '<div><label>月令旺衰（得令與否）</label>日主' + dmCh + '屬' + GAN_ELEM[dmCh] + '，生於' + bd.monthZ + '月（' + seasonElem(bd.monthZ) + '令），為「<b>' + bd.ws + '</b>」——' + WANGXIANG[bd.ws] + '。' +
+        '再以藏干加權、月令倍計，同黨（比劫＋印）佔全局 <b>' + Math.round(bd.ratio * 100) + '%</b>，判為<b>' + bd.level + '</b>。' +
+        '<br><span class="plain">白話：' + (bd.strong ? '你的自身能量充足，適合主動出擊、承擔大事；要注意的是「過猶不及」，懂得分享與放手更旺。' : '你的自身能量偏含蓄，適合借力使力、找對團隊與貴人；先顧好身心，再求擴張。') + '</span>' + cite('dts') + '</div>' +
+        '<div><label>格局．' + bd.geju + '</label>月令' + bd.monthZ + '藏「' + CANG[bd.monthZ].join('、') + '」，取' + (bd.touchu ? '透干之「' + bd.geStem + '」' : '本氣「' + bd.geStem + '」') + '（' + bd.geTg + '）立格。' + GEJU_DESC[bd.geju] + cite('zp') + '</div>' +
+        '<div><label>命中主導十神．' + bd.domTg + '（' + TG_PLAIN[bd.domTg] + '）</label>' + TG_DESC[bd.domTg] + cite('sm') + '</div>' +
+        '<div><label>用神喜忌</label>' + (bd.strong ? '身強宜洩、耗、剋（扶抑法）' : '身弱宜生、扶（扶抑法）') + (bd.tiaohou ? '；' + bd.tiaohou.txt : '') +
+        '<br>綜合取用：「<b>' + bd.fav.join('、') + '</b>」為你的開運五行' + (baziRes.missing.length ? '；命中缺「' + baziRes.missing.join('、') + '」，可藉' + baziRes.missing.map(e => ELEM_INFO[e].color.split('、')[0]).join('與') + '色系補足' : '；五行俱全，屬均衡之命') + '。' + cite('qt') + '</div>' +
+        '<div><label>2026 丙午流年</label>流年天干丙為你的「' + bd.lnStem + '」、地支午（藏丁）為「' + bd.lnBranch + '」。' + LIUNIAN_TG[bd.lnStem] + (bd.lnBranch !== bd.lnStem ? '下半年地支之氣更顯：' + LIUNIAN_TG[bd.lnBranch] : '') + '</div>' +
+        dayunHtml +
+        '</div>' +
         (baziRes.hourKnown ? '' : '<p class="c-note">＊未填出生時辰，以三柱推算；補上時辰可得更完整的命盤。</p>') });
     // 紫微斗數
     if (zw && lun) {
@@ -377,7 +409,17 @@
           '<div class="c-grid">' + starHtml +
           '<div><label>' + zw.juName + '</label>' + JU_DESC[zw.juElem] + '</div>' +
           (zw.shenStars.length ? '<div><label>身宮（' + ZHI[zw.shen] + '）主星：' + zw.shenStars.join('、') + '</label>身宮主中晚年走向與內在底色，' + zw.shenStars.join('、') + '的特質會隨年歲越發明顯。</div>' : '') +
-          '</div>' });
+          (zd ? (
+            '<div><label>命宮輔星</label>' + (zd.mingAux.length ? zd.mingAux.map(s => '<b>' + s + '</b>（' + AUX_MEAN[s] + '）').join('、') +
+              '——' + (zd.mingAux.some(s => AUX_BAD.includes(s)) && !zd.mingAux.some(s => AUX_GOOD.includes(s)) ? '命宮見煞，性格帶稜角，歷練越多越有成就。' : zd.mingAux.some(s => AUX_GOOD.includes(s)) ? '命宮得吉星拱照，一生多助力。' : '') : '命宮無六吉六煞，性格單純、少受外力干擾。') + '</div>' +
+            '<div><label>生年四化（' + zd.yGan + '干）</label>' + zd.sihua.map(x => x.star + x.hua + '在<b>' + x.palace + '</b>').join('；') +
+              '。<br><span class="plain">白話：' + zd.sihua.map(x => x.palace + '宮是你「' + HUA_MEAN[x.hua] + '」之處').join('；') + '。</span></div>' +
+            zd.three.map(t => '<div><label>' + t.p + '宮（' + t.zhi + '）' + (t.stars.length ? '．' + t.stars.join('') + (t.borrowed ? '（借對宮）' : '') : '') + '</label>' + (t.txt || '主星空缺，宜看對宮與流年。') +
+              (t.aux.length ? '；同宮' + t.aux.join('、') : '') + '</div>').join('') +
+            '<div><label>2026 丙年流年四化</label>' + zd.liunian.map(x => x.star + x.hua + '入你的<b>' + x.palace + '</b>').join('；') +
+              '。<br><span class="plain">白話：今年' + zd.liunian[0].palace + '最有收穫，' + zd.liunian[3].palace + '需多留心、別鑽牛角尖。</span></div>'
+          ) : '') +
+          '</div>' + cite('zw') });
     } else {
       cards.push({ id: 'ziwei', icon: '👑', title: '紫微斗數', tag: '需出生時辰方能立命盤',
         html: '<p class="c-trait">紫微斗數以農曆生辰＋時辰立命宮、定五行局、安十四主星。</p><p class="c-note">你尚未填寫出生時辰，點「重算」補上時辰即可解鎖完整紫微命盤。</p>' });
@@ -390,7 +432,7 @@
           '<div><label>意識太陽．' + hd.gate + ' 號閘門</label>' + HD_GATES[hd.gate] + '</div>' +
           '<div><label>設計太陽．' + hd.designGate + ' 號閘門（潛意識）</label>' + HD_GATES[hd.designGate] + '<br><span style="color:var(--ink-dim);font-size:13px">出生前約 88 天太陽所在之處，代表你自己看不見、別人卻感受得到的底層特質。</span></div>' +
           '</div>' +
-          '<p class="c-note">＊完整人類圖（類型／權威／通道）需精確出生時分與全星曆，此為太陽閘門速覽版。</p>' });
+          '<p class="c-note">＊完整人類圖（類型／權威／通道）需精確出生時分與全星曆，此為太陽閘門速覽版。' + cite('hd') + '</p>' });
     }
     // 血型
     if (blood !== '不知道') {
@@ -420,7 +462,61 @@
       missing: baziRes.missing.join('、') || '無', zH2: Z.h2.overall,
       bestH2: Z.h2[{ wealth: 'money', love: 'love', career: 'career', health: 'health', social: 'overall' }[best]] || Z.h2.overall
     };
+    // AI 解讀用命盤摘要（不含姓名與生日）
+    const focusTxt = { overall: '整體', money: '財運', love: '愛情', career: '事業', health: '健康' }[state.focus];
+    lastResult.chart = [
+      '性別：' + (state.gender === '祕密' ? '未提供' : state.gender) + '；2026 年約 ' + (2026 - y) + ' 歲；最想了解：' + focusTxt,
+      '星座：' + Z.name + '第' + decan.n + '區間（' + Z.elem + '象，副守護星' + decan.sub + '）',
+      '2026下半年行運：' + (transitNotes(zodiacKey).join(' ') || '無特殊重大行運'),
+      '生肖：屬' + sx.animal + '，與丙午太歲' + SX.rel,
+      '生命靈數：' + lastResult.lpTxt + '（' + lastResult.lpKey + '），流年數 ' + py,
+      '八字：' + baziRes.chars.map(c => c.gz).join(' ') + (baziRes.hourKnown ? '' : '（無時柱）') + '；日主' + dmCh + GAN_ELEM[dmCh],
+      '十神（天干）：' + bd.tgStem.map(s => s.g + s.tg).join('、'),
+      '月令：生於' + bd.monthZ + '月，日主' + bd.ws + '；旺衰：' + bd.level + '（同黨' + Math.round(bd.ratio * 100) + '%）',
+      '格局：' + bd.geju + '；主導十神：' + bd.domTg + '；年命納音：' + bd.nayin,
+      '用神：' + bd.fav.join('、') + (bd.tiaohou ? '（含調候' + bd.tiaohou.e + '）' : '') + '；五行缺：' + (baziRes.missing.join('、') || '無'),
+      '2026丙午流年：天干' + bd.lnStem + '、地支' + bd.lnBranch,
+      '大運：' + (bd.dayun && bd.dayun.cur ? '現行' + bd.dayun.cur.gz + '（' + bd.dayun.cur.tg + '）' : '未取得'),
+      zw ? '紫微：命宮在' + ZHI[zw.ming] + '，主星' + ((zw.mingStars.length ? zw.mingStars : zw.borrowed).join('、') || '無') + (zw.mingStars.length ? '' : '（借對宮）') + '；' + zw.juName +
+        (zd ? '；命宮輔星' + (zd.mingAux.join('、') || '無') + '；生年四化：' + zd.sihua.map(x => x.star + x.hua + '在' + x.palace).join('、') +
+          '；' + zd.three.map(t => t.p + '宮主星' + (t.stars.join('') || '無')).join('、') + '；2026流年四化：' + zd.liunian.map(x => x.star + x.hua + '入' + x.palace).join('、') : '') : '紫微：未提供時辰，無命盤',
+      '五運分數：財運' + scores.wealth + ' 愛情' + scores.love + ' 事業' + scores.career + ' 健康' + scores.health + ' 貴人' + scores.social
+    ].join('\n');
+    $('#ai-out').innerHTML = '';
+    $('#btn-ai').disabled = false;
+    $('#btn-ai').textContent = '✨ 請 AI 命理師深度解讀';
     pingResultCount();
+  }
+
+  // ---------- AI 命理師解讀 ----------
+  async function checkAI() {
+    try {
+      const s = await (await fetch('/api/ai/status')).json();
+      if (s.enabled) $('#r-ai').style.display = '';
+    } catch (e) {}
+  }
+  function renderAIText(t) {
+    return esc(t).split(/\n+/).map(line => {
+      const m = line.match(/^\s*【(.+?)】\s*(.*)$/);
+      if (m) return '<h4 class="ai-h">' + m[1] + '</h4>' + (m[2] ? '<p>' + m[2] + '</p>' : '');
+      return line.trim() ? '<p>' + line.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>') + '</p>' : '';
+    }).join('');
+  }
+  async function runAI() {
+    if (!lastResult || !lastResult.chart) return;
+    const btn = $('#btn-ai');
+    btn.disabled = true; btn.textContent = '🔮 命理師推演中，約需 20–40 秒…';
+    $('#ai-out').innerHTML = '<p class="c-note">正在綜合八字、紫微與星象，請稍候…</p>';
+    try {
+      const r = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chart: lastResult.chart }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'AI 暫時無法使用');
+      $('#ai-out').innerHTML = renderAIText(j.text);
+      btn.textContent = '✅ 解讀完成';
+    } catch (e) {
+      $('#ai-out').innerHTML = '<p class="c-note">⚠️ ' + esc(e.message) + '</p>';
+      btn.disabled = false; btn.textContent = '✨ 再試一次';
+    }
   }
 
   // ---------- 存成圖片（canvas 手繪命理圖卡） ----------
@@ -602,6 +698,8 @@
     };
     $('#btn-print').onclick = () => window.print();
     $('#btn-image').onclick = saveImage;
+    $('#btn-ai').onclick = runAI;
+    checkAI();
     $('#compact-image').onclick = saveImage;
     $('#btn-share-intro').onclick = doShare;
     $('#btn-share').onclick = doShare;

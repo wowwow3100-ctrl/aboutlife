@@ -331,6 +331,23 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .foot { text-align: center; color: #7d6647; font-size: 12.5px; margin-top: 26px; }
 .foot a { color: var(--gold-dim); }
 
+/* 古籍引用、白話、十神藏干、大運、AI */
+.cite { display: block; margin-top: 4px; color: #8d7350; font-size: 12px; letter-spacing: .03em; }
+.plain { color: #e6d3a8; font-size: 14px; }
+.pillar-tg { font-size: 12px; color: var(--red-seal); background: rgba(255,230,200,.85); border-radius: 3px; display: inline-block; padding: 0 6px; margin-bottom: 3px; }
+.pillar-cang { font-size: 12px; color: var(--ink-dim); margin-top: 5px; line-height: 1.6; }
+.pillar-cang small { color: #9b8258; font-size: 10.5px; margin-left: 1px; margin-right: 3px; }
+.dayun-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+.dayun { border: 1px solid rgba(217,164,65,.3); border-radius: 5px; padding: 4px 8px; text-align: center; min-width: 64px; }
+.dayun b { display: block; color: var(--gold-bright); font-size: 15px; }
+.dayun small { display: block; font-size: 11px; color: var(--ink-dim); }
+.dayun.cur { border-color: var(--gold-bright); background: rgba(217,164,65,.16); box-shadow: 0 0 10px rgba(217,164,65,.35); }
+.ai-box { border-color: var(--gold); }
+.ai-out h4.ai-h { color: var(--gold-bright); font-size: 17px; letter-spacing: .12em; margin: 16px 0 6px; border-left: 3px solid var(--gold); padding-left: 10px; }
+.ai-out p { font-size: 15px; margin-bottom: 8px; }
+.biblio p { font-size: 14px; margin-bottom: 8px; color: var(--ink); }
+.biblio b { color: var(--gold); }
+
 /* 線上人數綠點 */
 .online-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #4ade80; margin-right: 5px; box-shadow: 0 0 8px rgba(74,222,128,.8); animation: pulse 2s ease infinite; vertical-align: 1px; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
