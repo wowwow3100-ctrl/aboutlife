@@ -279,7 +279,8 @@
       '</div>';
 
     // 各月運勢（附推導依據）
-    $('#r-months').innerHTML = months.map(M =>
+    renderMonthCurve(months);
+    if (false) $('#r-months').innerHTML = months.map(M =>
       '<div class="month-card"><div class="month-head">' + M.m + '月<span>' + M.title + '．' + M.gz + '月</span>' +
       '<span class="luck-badge ' + (M.cls === 'good' ? 'good' : M.cls === 'bad' ? 'bad' : 'mid') + '" style="float:right">' + M.label + '</span></div>' +
       '<div class="month-body"><p class="month-basis">依據：' + M.basis + '。</p>' +
@@ -497,6 +498,45 @@
     $('#btn-ai').disabled = false;
     $('#btn-ai').textContent = '✨ 請 AI 命理師深度解讀';
     pingResultCount();
+  }
+
+  // ---------- 逐月運勢曲線 ----------
+  function renderMonthCurve(months) {
+    const W = 640, H = 230, px = 46, top = 34, bot = 44;
+    const xs = months.map((_, i) => px + i * (W - px * 2) / (months.length - 1));
+    const ys = months.map(M => top + (1 - (M.pts - 40) / 60) * (H - top - bot));
+    let path = 'M' + xs[0] + ',' + ys[0];
+    for (let i = 0; i < xs.length - 1; i++) {
+      const x0 = xs[i - 1] ?? xs[i], y0 = ys[i - 1] ?? ys[i], x3 = xs[i + 2] ?? xs[i + 1], y3 = ys[i + 2] ?? ys[i + 1];
+      const c1x = xs[i] + (xs[i + 1] - x0) / 6, c1y = ys[i] + (ys[i + 1] - y0) / 6;
+      const c2x = xs[i + 1] - (x3 - xs[i]) / 6, c2y = ys[i + 1] - (y3 - ys[i]) / 6;
+      path += ' C' + c1x.toFixed(1) + ',' + c1y.toFixed(1) + ' ' + c2x.toFixed(1) + ',' + c2y.toFixed(1) + ' ' + xs[i + 1] + ',' + ys[i + 1];
+    }
+    const area = path + ' L' + xs[xs.length - 1] + ',' + (H - bot) + ' L' + xs[0] + ',' + (H - bot) + ' Z';
+    const col = c => c === 'good' ? '#ecd08f' : c === 'bad' ? '#d0452f' : '#a8997f';
+    let svg = '<svg class="mc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+      '<defs><linearGradient id="mcFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a45c" stop-opacity=".35"/><stop offset="1" stop-color="#c9a45c" stop-opacity="0"/></linearGradient>' +
+      '<filter id="mcGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+    [50, 70, 90].forEach(v => { const y = top + (1 - (v - 40) / 60) * (H - top - bot); svg += '<line x1="' + px + '" x2="' + (W - px) + '" y1="' + y + '" y2="' + y + '" class="mc-grid"/><text x="' + (px - 10) + '" y="' + (y + 4) + '" class="mc-axis" text-anchor="end">' + v + '</text>'; });
+    svg += '<path d="' + area + '" fill="url(#mcFill)"/><path d="' + path + '" class="mc-line" filter="url(#mcGlow)"/>';
+    months.forEach((M, i) => {
+      svg += '<g class="mc-pt" data-i="' + i + '" tabindex="0"><title>' + M.m + '月 ' + M.gz + '月 ' + M.label + ' ' + M.pts + '分</title><circle cx="' + xs[i] + '" cy="' + ys[i] + '" r="16" fill="transparent"/>' +
+        '<circle cx="' + xs[i] + '" cy="' + ys[i] + '" r="' + (M.cls === 'good' ? 7 : 5.5) + '" fill="' + col(M.cls) + '" class="mc-dot' + (M.cls === 'good' ? ' glow' : '') + '"/>' +
+        '<text x="' + xs[i] + '" y="' + (ys[i] - 14) + '" class="mc-val" text-anchor="middle">' + M.pts + '</text>' +
+        '<text x="' + xs[i] + '" y="' + (H - bot + 22) + '" class="mc-mon" text-anchor="middle">' + M.m + '月</text>' +
+        '<text x="' + xs[i] + '" y="' + (H - bot + 38) + '" class="mc-lab lab-' + M.cls + '" text-anchor="middle">' + M.label + '</text></g>';
+    });
+    svg += '</svg>';
+    $('#r-months').innerHTML = svg + '<p class="mc-hint">點選月份查看依據與詳解</p><div id="mc-detail" class="mc-detail"></div>';
+    const showM = i => {
+      const M = months[i];
+      $$('#r-months .mc-pt').forEach(g => g.classList.toggle('sel', +g.dataset.i === i));
+      $('#mc-detail').innerHTML = '<div class="mc-dh">' + M.m + '月．' + M.title + '．' + M.gz + '月 <span class="luck-badge ' + (M.cls === 'good' ? 'good' : M.cls === 'bad' ? 'bad' : 'mid') + '">' + M.label + '．' + M.pts + '分</span></div>' +
+        '<p class="month-basis">依據：' + M.basis + '。</p><p>◈ ' + M.overall + '</p><p>💰 ' + M.money + '</p><p>💗 ' + M.love + '</p>';
+    };
+    $$('#r-months .mc-pt').forEach(g => { g.onclick = () => showM(+g.dataset.i); g.onkeydown = e => { if (e.key === 'Enter') showM(+g.dataset.i); }; });
+    let best = 0; months.forEach((M, i) => { if (M.pts > months[best].pts) best = i; });
+    showM(best);
   }
 
   // ---------- 本機命盤（只存在此裝置，供回訪一鍵查看） ----------

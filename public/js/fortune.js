@@ -353,8 +353,9 @@ function monthlyFortune(profileSeed, animalZhiIdx, favorable, animalName, luckyM
     if (fav) basis += '；' + elem + '又是你的喜用五行';
     if (isLucky) basis += '；並逢你的星座幸運月';
     const P = MONTH_TXT[cls];
+    const pts = Math.max(45, Math.min(96, Math.round(70 + score * 8 + (rng() * 8 - 4))));
     out.push({
-      m: mm, title: MONTH_TITLE[mm], gz, cls, basis,
+      m: mm, title: MONTH_TITLE[mm], gz, cls, basis, pts,
       label: cls === 'good' ? '吉' : cls === 'bad' ? '慎' : '平',
       overall: P.o[Math.floor(rng() * P.o.length)],
       money: P.m[Math.floor(rng() * P.m.length)],
