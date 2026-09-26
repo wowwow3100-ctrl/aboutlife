@@ -256,6 +256,35 @@ function ziweiDeep(zw, lun, hourIdx) {
   return { yGan, aux, sihua, liunian, three, mingAux };
 }
 
+// ---------- 今日運勢（流日干支 × 日主十神） ----------
+const DAILY_TG = {
+  '比肩': { s: 72, t: '今日比肩當值：適合獨立作業、做自己的決定；與同事朋友易有意見分歧，堅持但不硬碰。', yi: '健身、整理個人事務', ji: '合夥談錢' },
+  '劫財': { s: 60, t: '今日劫財當值：人情與花費都多，荷包要顧；衝勁強，適合運動與行動派的事。', yi: '運動、團隊活動', ji: '借錢、衝動購物' },
+  '食神': { s: 86, t: '今日食神當值：心情愉快、靈感豐富，是享受美食、創作與約會的好日子。', yi: '創作、聚餐、約會', ji: '過度放縱' },
+  '傷官': { s: 68, t: '今日傷官當值：點子多、表達慾強，適合提案與發想；說話易直，留三分給人。', yi: '腦力激盪、學新東西', ji: '頂撞長官、網路筆戰' },
+  '偏財': { s: 84, t: '今日偏財當值：人緣與機會財都旺，適合業務拜訪、社交與小試身手。', yi: '談生意、社交', ji: '貪心加碼' },
+  '正財': { s: 80, t: '今日正財當值：適合處理帳務、談薪、踏實完成手上工作，努力看得到回報。', yi: '理財、完成工作', ji: '拖延正事' },
+  '七殺': { s: 58, t: '今日七殺當值：壓力與挑戰上門，但也是展現魄力的時機；注意交通與情緒。', yi: '攻克難題', ji: '冒險、爭吵' },
+  '正官': { s: 82, t: '今日正官當值：貴氣之日，適合面試、見長官、處理公文與正式場合。', yi: '面試、簽約、拜訪長輩', ji: '違規、遲到' },
+  '偏印': { s: 66, t: '今日偏印當值：直覺敏銳、適合獨處思考與研究；人際上容易想太多。', yi: '閱讀、研究、冥想', ji: '疑神疑鬼' },
+  '正印': { s: 88, t: '今日正印當值：貴人與長輩助力明顯，學習、考試、求助都順利。', yi: '讀書、請教、求援', ji: '固執己見' }
+};
+function dailyFortune(dm, fav, date) {
+  const dt = date || new Date();
+  const ed = epochDays(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+  const di = ((ed % 60) + GEN.DAY_K + 60) % 60;
+  const g = GAN[di % 10], z = ZHI[di % 12];
+  const tg = tenGod(dm, g);
+  const D = DAILY_TG[tg];
+  let score = D.s;
+  const ge = GAN_ELEM[g], ze = ZHI_ELEM[z];
+  if (fav.includes(ge)) score += 5;
+  if (fav.includes(ze)) score += 4;
+  score = Math.min(98, score);
+  const luckyElem = fav[0];
+  return { date: dt, gz: g + z, tg, score, text: D.t, yi: D.yi, ji: D.ji, basis: '今日為' + g + z + '日，天干' + g + '對你的日主' + dm + '為「' + tg + '」' + (fav.includes(ge) || fav.includes(ze) ? '，且逢你的喜用五行' : ''), color: ELEM_INFO[luckyElem].color.split('、')[0], dir: ELEM_INFO[luckyElem].dir };
+}
+
 // ---------- 星座 2026 下半年行運 ----------
 function transitNotes(key) {
   const out = [];

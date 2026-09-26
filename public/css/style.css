@@ -348,6 +348,25 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .biblio p { font-size: 14px; margin-bottom: 8px; color: var(--ink); }
 .biblio b { color: var(--gold); }
 
+/* About Life 副標、隱私、回訪、今日運勢 */
+.site-en { font-family: "Cormorant Garamond", "Times New Roman", serif; font-style: italic; color: var(--gold); font-size: 22px; letter-spacing: .32em; margin-top: 2px; text-shadow: 0 0 14px rgba(217,164,65,.3); }
+.privacy-line { margin-top: 10px; color: #b89a66; font-size: 13px; letter-spacing: .05em; }
+#privacy-modal { display: none; position: fixed; inset: 0; z-index: 95; background: rgba(10,2,2,.82); backdrop-filter: blur(3px); padding: 60px 14px; overflow-y: auto; }
+#privacy-modal.open { display: block; }
+#welcome-back { max-width: 560px; margin: 18px auto 4px; border: 1px solid var(--gold); border-radius: 8px; padding: 16px; background: rgba(217,164,65,.07); }
+.wb-title { color: var(--gold-bright); font-size: 17px; letter-spacing: .1em; margin-bottom: 10px; }
+.wb-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.wb-item { cursor: pointer; border: 1px solid var(--gold-dim); border-radius: 999px; padding: 7px 16px; color: var(--ink); font-size: 14.5px; background: transparent; font-family: inherit; }
+.wb-item:hover { background: rgba(217,164,65,.16); color: var(--gold-bright); }
+.wb-item small { color: var(--ink-dim); margin-left: 4px; }
+.wb-warn { margin-top: 10px; color: #e0a08c; font-size: 12.5px; }
+.wb-clear { margin-top: 10px; background: none; border: none; color: #8d7350; font-size: 12px; cursor: pointer; text-decoration: underline; font-family: inherit; }
+.daily-box { border-color: var(--gold); }
+.daily-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.daily-score { font-size: 46px; font-weight: 900; color: var(--gold-bright); line-height: 1; }
+.daily-score small { font-size: 14px; color: var(--ink-dim); font-weight: 400; margin-left: 4px; }
+.daily-come { color: #b89a66; font-size: 13px; margin-top: 8px; }
+
 /* 線上人數綠點 */
 .online-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #4ade80; margin-right: 5px; box-shadow: 0 0 8px rgba(74,222,128,.8); animation: pulse 2s ease infinite; vertical-align: 1px; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }

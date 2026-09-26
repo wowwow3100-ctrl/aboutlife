@@ -141,12 +141,12 @@
 
   // ---------- 排盤 ----------
   const LOAD_LINES = ['正在焚香淨手…', '推算生辰節氣…', '換算農曆生辰…', '排列三才五格…', '對照八十一數理…', '安紫微十四主星…', '推算太陽閘門…', '觀星測影，推演流年…', '天機將現，請稍候…'];
-  function startAnalyze() {
+  function startAnalyze(quick) {
     show('#screen-loading');
     let i = 0;
-    $('#load-line').textContent = LOAD_LINES[0];
+    $('#load-line').textContent = quick ? '調出你的命盤，推算今日流日…' : LOAD_LINES[0];
     const iv = setInterval(() => { i = (i + 1) % LOAD_LINES.length; $('#load-line').textContent = LOAD_LINES[i]; }, 820);
-    setTimeout(() => { clearInterval(iv); renderResult(); show('#screen-result'); }, 7000);
+    setTimeout(() => { clearInterval(iv); renderResult(); show('#screen-result'); }, quick ? 2200 : 7000);
   }
 
   // ---------- 結果組裝 ----------
@@ -452,6 +452,17 @@
       '<div class="sys-head"><span class="sys-icon">' + c.icon + '</span><div><h3>' + c.title + '</h3><div class="sys-tag">' + c.tag + '</div></div></div>' +
       '<div class="sys-body">' + c.html + '</div></section>').join('');
 
+    // 今日運勢（每天不同，回訪誘因）
+    const dly = dailyFortune(baziRes.dayMaster, bd.fav);
+    $('#daily-date').textContent = (dly.date.getMonth() + 1) + '月' + dly.date.getDate() + '日．' + dly.gz + '日';
+    $('#r-daily').innerHTML =
+      '<div class="daily-top"><div class="daily-score">' + dly.score + '<small>分</small></div><div><b style="color:var(--gold-bright)">' + dly.tg + '日</b>．' + TG_PLAIN[dly.tg] + '<br>' +
+      '<span style="font-size:14px">🎨 幸運色 ' + dly.color + '　🧭 吉方 ' + dly.dir + '</span></div></div>' +
+      '<p class="month-basis">依據：' + dly.basis + '。</p>' +
+      '<p>' + dly.text + '</p><p>✅ 宜：' + dly.yi + '　🚫 忌：' + dly.ji + '</p>' +
+      '<p class="daily-come">📅 今日運勢每天換一次，命盤已存在你的裝置裡——明天回來首頁點你的名字，一秒就能看。<br>⚠️ 清除 Cookie／瀏覽器資料、無痕模式或換手機，紀錄會消失，建議順手「存成圖片」留底。</p>';
+    saveProfile();
+
     lastResult = {
       name: dispName, honorTxt: hasName ? honor() : '', ymd: y + '/' + m + '/' + d,
       zName: Z.name, zIcon: Z.icon, decanN: decan.n, animal: sx.animal, sxIcon: SX.icon, sxRel: SX.rel,
@@ -486,6 +497,44 @@
     $('#btn-ai').disabled = false;
     $('#btn-ai').textContent = '✨ 請 AI 命理師深度解讀';
     pingResultCount();
+  }
+
+  // ---------- 本機命盤（只存在此裝置，供回訪一鍵查看） ----------
+  function loadProfiles() { try { return JSON.parse(localStorage.getItem('xj_profiles') || '[]'); } catch (e) { return []; } }
+  function saveProfile() {
+    try {
+      const p = { name: state.name, gender: state.gender, y: state.y, m: state.m, d: state.d, hourIdx: state.hourIdx, lateZi: state.lateZi, blood: state.blood, focus: state.focus, strokes: state.strokes };
+      const key = p.name + '|' + p.y + '-' + p.m + '-' + p.d + '|' + p.hourIdx;
+      const list = loadProfiles().filter(x => (x.name + '|' + x.y + '-' + x.m + '-' + x.d + '|' + x.hourIdx) !== key);
+      list.unshift(p);
+      localStorage.setItem('xj_profiles', JSON.stringify(list.slice(0, 8)));
+      renderWelcome();
+    } catch (e) {}
+  }
+  function renderWelcome() {
+    const box = $('#welcome-back');
+    if (!box) return;
+    const list = loadProfiles();
+    if (!list.length) { box.style.display = 'none'; return; }
+    box.style.display = '';
+    box.innerHTML = '<div class="wb-title">🍍 歡迎回來！點名字看今日運勢</div><div class="wb-list">' +
+      list.map((p, i) => '<button class="wb-item" data-i="' + i + '">' + esc(p.name || '有緣人') + '<small>' + p.y + '/' + p.m + '/' + p.d + '</small></button>').join('') +
+      '</div><div class="wb-warn">⚠️ 紀錄只存在這台裝置，清除 Cookie／瀏覽器資料或用無痕模式就會不見</div><button class="wb-clear" id="wb-clear">清除本機紀錄</button>';
+    box.querySelectorAll('.wb-item').forEach(b => b.onclick = () => {
+      const p = loadProfiles()[+b.dataset.i];
+      if (!p) return;
+      Object.assign(state, p);
+      if (!state.strokes) state.strokes = [];
+      startAnalyze(true);
+    });
+    $('#wb-clear').onclick = () => { localStorage.removeItem('xj_profiles'); renderWelcome(); toast('本機紀錄已清除'); };
+  }
+  function privacyNotice() {
+    try {
+      if (localStorage.getItem('xj_privacy_ok')) return;
+      $('#privacy-modal').classList.add('open');
+      $('#privacy-ok').onclick = () => { localStorage.setItem('xj_privacy_ok', '1'); $('#privacy-modal').classList.remove('open'); };
+    } catch (e) {}
   }
 
   // ---------- AI 命理師解讀 ----------
@@ -700,6 +749,8 @@
     $('#btn-image').onclick = saveImage;
     $('#btn-ai').onclick = runAI;
     checkAI();
+    renderWelcome();
+    privacyNotice();
     $('#compact-image').onclick = saveImage;
     $('#btn-share-intro').onclick = doShare;
     $('#btn-share').onclick = doShare;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>旺來開運所．線上命理分析｜星座・生肖・姓名學・生命靈數・八字五行</title>
+  <title>旺來開運所｜About Life．線上命理分析｜星座・生肖・姓名學・生命靈數・八字五行</title>
   <meta name="description" content="免費線上命理分析：西洋星座、生肖運程、姓名學三才五格、生命靈數、八字五行、血型分析、每日塔羅，一次算清 2026 下半年財運、愛情、事業運勢。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -16,6 +16,7 @@
 
     <header class="site-head">
       <div class="site-title"><span class="seal">旺來</span>旺來開運所</div>
+      <div class="site-en">About Life</div>
       <div class="site-sub">線 上 命 理 分 析</div>
       <div class="byline">by 旺來 <a href="https://www.threads.com/@wowwow31001" target="_blank" rel="noopener">wowwow31001</a></div>
       <div class="head-divider"></div>
@@ -35,7 +36,9 @@
             <span>👑 紫微斗數</span><span>🔯 人類圖</span>
             <span>🩸 血型分析</span><span>🃏 每日塔羅</span><span>✨ AI 命理師</span>
           </div>
+          <div id="welcome-back" style="display:none"></div>
           <button class="btn-gold" id="btn-start">開 始 問 命</button>
+          <div class="privacy-line">🔒 所有命盤都在你的裝置上計算，不上傳、不存雲端</div>
           <div style="margin-top:14px"><button class="btn-ghost" id="btn-share-intro">🔗 分享給朋友</button></div>
           <div class="visit-line" id="visit-counter">香客足跡載入中…</div>
 
@@ -43,7 +46,7 @@
             <summary>本站如何分析與統計？</summary>
             <div class="explain-body">
               <p><b>怎麼分析：</b>你填的姓名與生辰會以八大命理系統「合參」——星座依出生日期界線判定；生肖與八字年柱依<b>立春</b>為界（非農曆除夕）；姓名學採<b>康熙字典筆畫</b>推三才五格與 81 數理；八字以內建 1924–2033 節氣表排四柱，再依《子平真詮》取格局、《滴天髓》以藏干與月令論旺衰、《窮通寶鑑》論調候用神，並排出大運流年；紫微斗數依《紫微斗數全書》安十四主星、六吉六煞與四化；生命靈數取生日數字根、流年數對應 2026。各面向分數由上述系統加權合成，同一個人同一天算出的結果<b>固定不變</b>（每日塔羅每天更換），不是隨機亂數。</p>
-              <p><b>怎麼統計：</b>首頁的「香客足跡」由伺服器記錄瀏覽次數與匿名裝置資訊；你填寫的<b>姓名與生日只在你的瀏覽器裡計算，不會上傳</b>；若按下「AI 命理師解讀」，只會傳送排好的命盤術語資料，不含姓名與生日。</p>
+              <p><b>怎麼統計：</b>首頁的「香客足跡」由伺服器記錄瀏覽次數與匿名裝置資訊；你填寫的<b>姓名與生日只在你的裝置上計算，不上傳、不存雲端</b>（為了讓你回訪一鍵看今日運勢，命盤只記在這台裝置的瀏覽器，可隨時清除）；若按下「AI 命理師解讀」，只會傳送排好的命盤術語資料，不含姓名與生日。</p>
               <p><b>提醒：</b>命理為千年統計與經驗之學，結果僅供娛樂與自我探索參考——觀命不改命，知運而用運。</p>
             </div>
           </details>
@@ -146,6 +149,11 @@
     <div class="screen" id="screen-result">
       <div class="r-section" id="r-head"></div>
 
+      <div class="r-section daily-box">
+        <h2>今日運勢．<span id="daily-date"></span></h2>
+        <div class="inner" id="r-daily"></div>
+      </div>
+
       <div class="r-section">
         <h2>下半年五運總覽</h2>
         <div class="inner" id="r-scores"></div>
@@ -156,7 +164,7 @@
         <div class="inner" id="r-summary"></div>
       </div>
 
-      <div class="r-section">
+      <div class="r-section" id="sec-persona" style="display:none">
         <h2>性格側寫．處事風格</h2>
         <div class="inner" id="r-persona"></div>
       </div>
@@ -229,6 +237,18 @@
         <button class="btn-ghost" id="compact-print">🖨 列印此版</button>
         <button class="btn-ghost" id="compact-close">關閉</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 首次隱私提示 -->
+  <div id="privacy-modal">
+    <div class="compact-card" style="text-align:center">
+      <div class="cp-title">🔒 隱私說明</div>
+      <p class="cp-line" style="text-align:left">旺來開運所的所有命理計算都在<b>你自己的手機／電腦上執行</b>：你輸入的姓名、生日、時辰<b>不會上傳，也不會存在雲端</b>。</p>
+      <p class="cp-line" style="text-align:left">為了讓你下次回來能一鍵看「今日運勢」，命盤只會記在<b>這台裝置的瀏覽器</b>裡，隨時可在首頁一鍵清除。</p>
+      <p class="cp-line" style="text-align:left;color:#f0a58f">⚠️ 提醒：若清除瀏覽器的 Cookie／網站資料、使用無痕模式或換手機，曾經算過的紀錄就會不見，需要重新輸入。</p>
+      <p class="cp-line" style="text-align:left;color:var(--ink-dim);font-size:13px">唯一例外：若你主動按下「AI 命理師解讀」，只會傳送排好的命盤術語，不含姓名與生日。</p>
+      <div class="compact-actions"><button class="btn-gold" id="privacy-ok" style="font-size:16px;padding:10px 36px">我知道了，開始吧</button></div>
     </div>
   </div>
 
