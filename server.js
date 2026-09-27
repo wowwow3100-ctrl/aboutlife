@@ -6,7 +6,8 @@ const path = require('path');
 
 const PORT = process.env.PORT || 3300;
 const PUB = path.join(__dirname, 'public');
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data'); // Railway 掛 Volume 時設 DATA_DIR=/data
+// 統計存放：優先 DATA_DIR，其次 Railway 掛載 Volume 時自動提供的 RAILWAY_VOLUME_MOUNT_PATH
+const DATA_DIR = process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, 'data');
 const STATS_FILE = path.join(DATA_DIR, 'stats.json');
 
 // ---------- 統計資料 ----------
@@ -220,7 +221,7 @@ const server = http.createServer((req, res) => {
       events: { today: (stats.ev || {})[day] || {}, total: stats.evTotal || {} },
       daily: days.map(d => Object.assign({ d, v: stats.daily[d].v, u: stats.daily[d].u }, (stats.ev || {})[d] || {})),
       devices: dev,
-      storage: { dataDir: DATA_DIR, envSet: !!process.env.DATA_DIR, fileExists: fs.existsSync(STATS_FILE), lastSaveAt, lastSaveErr, bootLoaded: !!loaded },
+      storage: { dataDir: DATA_DIR, envSet: !!process.env.DATA_DIR, volume: process.env.RAILWAY_VOLUME_MOUNT_PATH || null, fileExists: fs.existsSync(STATS_FILE), lastSaveAt, lastSaveErr, bootLoaded: !!loaded },
       ai: { enabled: !!process.env.ANTHROPIC_API_KEY, model: AI_MODEL, usedToday: aiDay === day ? aiDayCount : 0, limit: AI_DAILY_LIMIT }
     }));
     return;
