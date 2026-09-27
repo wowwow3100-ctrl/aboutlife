@@ -165,14 +165,30 @@
     document.body.removeChild(ta);
     return Promise.resolve();
   }
-  function doShare() {
+  // 分享：附上品牌圖卡（og-cover），手機分享面板會顯示圖卡而非小圖示
+  let shareCardFile = null;
+  async function getShareCard() {
+    if (shareCardFile) return shareCardFile;
+    try {
+      const blob = await (await fetch('/img/og-cover.png')).blob();
+      shareCardFile = new File([blob], '旺來開運所.png', { type: 'image/png' });
+    } catch (e) { shareCardFile = null; }
+    return shareCardFile;
+  }
+  async function doShare() {
     const url = siteUrl();
-    let text = '旺來開運所．線上命理分析｜星座×生肖×姓名學×生命靈數×八字五行，一次看懂 2026 下半年財運、愛情、事業！';
-    if (lastResult) text = '我在「旺來開運所」測了 2026 下半年運勢，' + lastResult.bestName + '拿了 ' + lastResult.bestScore + ' 分！你也來算算～';
+    const title = '旺來開運所｜算算你的好運氣';
+    let text = '財運愛情事業，一次幫你算 🍍';
+    if (lastResult) text = '我在「旺來開運所」算了下半年運勢，' + lastResult.bestName + '拿了 ' + lastResult.bestScore + ' 分！你也來算算 🍍';
     if (navigator.share) {
-      navigator.share({ title: '旺來開運所．線上命理分析', text, url }).catch(() => {});
+      const file = await getShareCard();
+      const withFile = { title, text: text + '\n' + url, files: file ? [file] : [] };
+      try {
+        if (file && navigator.canShare && navigator.canShare(withFile)) { await navigator.share(withFile); return; }
+        await navigator.share({ title, text, url });
+      } catch (e) {}
     } else {
-      copyText(text + '\n' + url).then(() => toast('分享文字已複製，貼給朋友吧！'));
+      copyText(title + '\n' + text + '\n' + url).then(() => toast('分享文字已複製，貼給朋友吧！'));
     }
   }
 
@@ -845,6 +861,7 @@
     checkAI();
     renderWelcome();
     privacyNotice();
+    getShareCard(); // 預先載入分享圖卡，避免點分享時等待
     $('#compact-image').onclick = saveImage;
     $('#btn-share-intro').onclick = doShare;
     $('#btn-share').onclick = doShare;
