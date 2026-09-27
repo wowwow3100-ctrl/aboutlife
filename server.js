@@ -41,6 +41,20 @@ function todayStr() {
 }
 // 每日不重複訪客：只保留近 3 天的當日訪客清單以控制檔案大小
 let dayVids = {};
+// ---------- 行為事件（匿名計數：算命完成、分享、存圖…，不含任何個資） ----------
+const EVENT_NAMES = ['calc', 'calc_return', 'share', 'save_image', 'compact', 'print', 'ai', 'friend'];
+function recordEvent(name) {
+  if (!EVENT_NAMES.includes(name)) return false;
+  const day = todayStr();
+  stats.ev = stats.ev || {};
+  stats.ev[day] = stats.ev[day] || {};
+  stats.ev[day][name] = (stats.ev[day][name] || 0) + 1;
+  stats.evTotal = stats.evTotal || {};
+  stats.evTotal[name] = (stats.evTotal[name] || 0) + 1;
+  scheduleSave();
+  return true;
+}
+
 function recordVisit(vid, ua) {
   const day = todayStr();
   stats.total++;
@@ -178,6 +192,34 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ ok: 1, online: onlineCount() }));
     });
+    return;
+  }
+  // 給「旺來後台」跨站讀取（只開放彙總數字）
+  const ALLOW = (process.env.ADMIN_ORIGINS || 'https://web-production-e1521.up.railway.app').split(',');
+  const origin = req.headers.origin || '';
+  if (ALLOW.includes(origin)) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); }
+  if (req.method === 'OPTIONS') { res.setHeader('Access-Control-Allow-Methods', 'GET,POST'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); res.writeHead(204); res.end(); return; }
+  if (p === '/api/event' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 512) req.destroy(); });
+    req.on('end', () => { let n = ''; try { n = String(JSON.parse(body || '{}').name || ''); } catch (e) {} recordEvent(n); res.writeHead(204); res.end(); });
+    return;
+  }
+  if (p === '/api/admin/summary' && req.method === 'GET') {
+    const day = todayStr();
+    const days = Object.keys(stats.daily).sort().slice(-30);
+    const dev = { mobile: 0, desktop: 0, other: 0 };
+    for (const e of stats.events) { const ua = e.ua || ''; if (/mobile|iphone|android/i.test(ua)) dev.mobile++; else if (/bot|spider|curl/i.test(ua)) dev.other++; else dev.desktop++; }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache' });
+    res.end(JSON.stringify({
+      site: '旺來開運所', url: 'https://aboutlife-production.up.railway.app',
+      generatedAt: new Date().toISOString(),
+      visits: { total: stats.total, unique: Object.keys(stats.vids).length, today: stats.daily[day] || { v: 0, u: 0 }, online: onlineCount() },
+      events: { today: (stats.ev || {})[day] || {}, total: stats.evTotal || {} },
+      daily: days.map(d => Object.assign({ d, v: stats.daily[d].v, u: stats.daily[d].u }, (stats.ev || {})[d] || {})),
+      devices: dev,
+      ai: { enabled: !!process.env.ANTHROPIC_API_KEY, model: AI_MODEL, usedToday: aiDay === day ? aiDayCount : 0, limit: AI_DAILY_LIMIT }
+    }));
     return;
   }
   if (p === '/api/stats' && req.method === 'GET') {

@@ -143,6 +143,7 @@
   // ---------- 排盤 ----------
   const LOAD_LINES = ['正在焚香淨手…', '推算生辰節氣…', '換算農曆生辰…', '排列三才五格…', '對照八十一數理…', '安紫微十四主星…', '推算太陽閘門…', '觀星測影，推演流年…', '天機將現，請稍候…'];
   function startAnalyze(quick) {
+    track(quick ? 'calc_return' : 'calc');
     show('#screen-loading');
     let i = 0;
     $('#load-line').textContent = quick ? '調出你的命盤，推算今日流日…' : LOAD_LINES[0];
@@ -156,6 +157,9 @@
   const ASPECT_NAME = { wealth: '財運', love: '愛情', career: '事業', health: '健康', social: '貴人' };
   let lastResult = null;
 
+  // 匿名行為計數（只送事件名稱，不含任何輸入資料）
+  function track(name) { try { fetch('/api/event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }), keepalive: true }); } catch (e) {} }
+
   // ---------- 複製 / 分享 ----------
   function copyText(t) {
     if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
@@ -168,6 +172,7 @@
   // 分享：只分享文字＋連結（複製時一定帶網址）；聊天室會依 og 標籤自動顯示品牌預覽圖
   async function doShare() {
     const url = siteUrl();
+    track('share');
     const title = '旺來開運所｜算算你的好運氣';
     let text = '財運愛情事業，一次幫你算 🍍';
     if (lastResult) text = '我在「旺來開運所」算了下半年運勢，' + lastResult.bestName + '拿了 ' + lastResult.bestScore + ' 分！你也來算算 🍍';
@@ -629,6 +634,7 @@
   }
   async function runAI() {
     if (!lastResult || !lastResult.chart) return;
+    track('ai');
     const btn = $('#btn-ai');
     btn.disabled = true; btn.textContent = '🔮 命理師推演中，約需 20–40 秒…';
     $('#ai-out').innerHTML = '<p class="c-note">正在綜合八字、紫微與星象，請稍候…</p>';
@@ -661,6 +667,7 @@
   function saveImage() {
     const r = lastResult;
     if (!r) return;
+    track('save_image');
     try {
       const W = 1080, H = 1700;
       const cv = document.createElement('canvas');
@@ -796,6 +803,7 @@
   function openCompact() {
     const r = lastResult;
     if (!r) return;
+    track('compact');
     const p = r.persona || {};
     const d = r.daily || {};
     // 拼「你是怎樣的人」段落：星座主軸 + 生肖補刀 + 靈數決策 + 日主 + 血型
@@ -842,6 +850,7 @@
     $('#btn-prev').onclick = () => gotoStep(Math.max(0, state.step - 1));
     $('#btn-redo').onclick = () => { show('#screen-form'); gotoStep(0); };
     $('#btn-friend').onclick = () => {
+      track('friend');
       $('#f-name').value = '';
       $('#stroke-editor').innerHTML = ''; $('#stroke-editor').classList.remove('open');
       $$('input[name="f-gender"]').forEach(r => r.checked = r.value === '祕密');
@@ -852,7 +861,7 @@
       show('#screen-form'); gotoStep(0);
       $('#f-name').focus();
     };
-    $('#btn-print').onclick = () => window.print();
+    $('#btn-print').onclick = () => { track('print'); window.print(); };
     $('#btn-image').onclick = saveImage;
     $('#btn-ai').onclick = runAI;
     checkAI();
