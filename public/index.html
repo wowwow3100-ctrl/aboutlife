@@ -24,24 +24,49 @@
 
     <!-- 首頁 -->
     <div class="screen active" id="screen-intro">
-      <div class="hero">
-        <div class="hero-frame"><span class="corner"></span>
-          <h2>天機藏於生辰，命名載於筆畫</h2>
-          <p class="lead">填寫姓名與生辰，旺來開運所依古籍法則合參十大命理系統，</p>
-          <p class="lead">細解 <b style="color:var(--gold-bright)">2026 丙午馬年下半年</b> 的財運、愛情、事業與健康。</p>
-          <p class="lead-dim">觀命不改命，知運而用運——結果僅供參考，人生仍由你主筆。</p>
-          <div class="sys-icons">
-            <span>♈ 西洋星座</span><span>🐴 生肖運程</span><span>✍️ 姓名學三才五格</span>
-            <span>🔢 生命靈數</span><span>☯️ 八字五行</span><span>🎂 生日密碼</span>
-            <span>👑 紫微斗數</span><span>🔯 人類圖</span>
-            <span>🩸 血型分析</span><span>🃏 每日塔羅</span><span>✨ AI 命理師</span>
-          </div>
-          <div id="welcome-back" style="display:none"></div>
-          <button class="btn-gold" id="btn-start">開 始 問 命</button>
-          <div class="privacy-line">🔒 所有命盤都在你的裝置上計算，不上傳、不存雲端</div>
-          <div style="margin-top:14px"><button class="btn-ghost" id="btn-share-intro">🔗 分享給朋友</button></div>
-          <div class="visit-line" id="visit-counter">香客足跡載入中…</div>
+      <section class="home-hero">
+        <div class="home-eyebrow"><span></span>2026 丙午馬年．下半年運勢<span></span></div>
+        <h2 class="home-h1">天機藏於生辰<br>命名載於筆畫</h2>
+        <p class="home-lead">輸入姓名與生辰，依《子平真詮》《紫微斗數全書》等古籍法則，<br class="br-desk">合參十二門命理，細解你的財運、愛情、事業與健康。</p>
 
+        <div id="welcome-back" style="display:none"></div>
+
+        <div class="home-cta">
+          <button class="btn-gold" id="btn-start">開始問命</button>
+          <button class="btn-ghost" id="btn-share-intro">分享給朋友</button>
+        </div>
+        <div class="privacy-line">所有命盤皆在你的裝置上計算・不上傳・不存雲端</div>
+        <div class="home-stats" id="visit-counter"><div class="stat"><b>—</b><span>香客足跡</span></div><div class="stat"><b>—</b><span>此刻線上</span></div></div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-sec-title"><span>十二門命理・一次合參</span></div>
+        <div class="sys-grid">
+            <div class="sys-tile"><span class="sys-glyph">星</span><span class="sys-name">西洋星座</span><span class="sys-desc">黃道三區間・行運</span></div>
+            <div class="sys-tile"><span class="sys-glyph">肖</span><span class="sys-name">生肖流年</span><span class="sys-desc">丙午太歲沖合</span></div>
+            <div class="sys-tile"><span class="sys-glyph">名</span><span class="sys-name">姓名學</span><span class="sys-desc">熊崎五格・81 數</span></div>
+            <div class="sys-tile"><span class="sys-glyph">數</span><span class="sys-name">生命靈數</span><span class="sys-desc">主命數・流年數</span></div>
+            <div class="sys-tile"><span class="sys-glyph">八</span><span class="sys-name">八字命盤</span><span class="sys-desc">十神・格局・大運</span></div>
+            <div class="sys-tile"><span class="sys-glyph">紫</span><span class="sys-name">紫微斗數</span><span class="sys-desc">十四主星・四化</span></div>
+            <div class="sys-tile"><span class="sys-glyph">圖</span><span class="sys-name">人類圖</span><span class="sys-desc">太陽閘門速覽</span></div>
+            <div class="sys-tile"><span class="sys-glyph">誕</span><span class="sys-name">生日密碼</span><span class="sys-desc">出生日・誕生石</span></div>
+            <div class="sys-tile"><span class="sys-glyph">血</span><span class="sys-name">血型性格</span><span class="sys-desc">四型處事傾向</span></div>
+            <div class="sys-tile"><span class="sys-glyph">牌</span><span class="sys-name">每日塔羅</span><span class="sys-desc">大阿爾克那</span></div>
+            <div class="sys-tile"><span class="sys-glyph">運</span><span class="sys-name">今日運勢</span><span class="sys-desc">流日干支十神</span></div>
+            <div class="sys-tile"><span class="sys-glyph">智</span><span class="sys-name">AI 命理師</span><span class="sys-desc">綜合古籍深度解讀</span></div>
+        </div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-sec-title"><span>三步完成・約一分鐘</span></div>
+        <div class="home-steps">
+          <div class="step"><i>一</i><b>報上姓名</b><span>可留空，略過姓名學</span></div>
+          <div class="step"><i>二</i><b>輸入生辰</b><span>國曆生日，時辰可選填</span></div>
+          <div class="step"><i>三</i><b>取得命書</b><span>可存圖、分享、明日再看</span></div>
+        </div>
+      </section>
+
+      <section class="home-section home-foot">
           <details class="explain">
             <summary>本站如何分析與統計？</summary>
             <div class="explain-body">
@@ -50,14 +75,11 @@
               <p><b>提醒：</b>命理為千年統計與經驗之學，結果僅供娛樂與自我探索參考——觀命不改命，知運而用運。</p>
             </div>
           </details>
-
           <div class="disclaim">本站內容僅供娛樂與自我探索參考，不構成醫療、投資或人生重大決策建議。</div>
-
-          <div class="intro-return" style="margin-top:22px;text-align:center">
-            <a class="btn-ghost" style="text-decoration:none;display:inline-block" href="https://daily-tw.up.railway.app/" target="_blank" rel="noopener">🍍 回到 旺來台股情報站 ↗</a>
+          <div class="intro-return">
+            <a class="btn-ghost" href="https://daily-tw.up.railway.app/" target="_blank" rel="noopener">回到 旺來台股情報站 ↗</a>
           </div>
-        </div>
-      </div>
+      </section>
     </div>
 
     <!-- 引導式表單 -->

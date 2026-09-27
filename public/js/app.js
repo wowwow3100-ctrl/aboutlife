@@ -22,7 +22,8 @@
   }
   function shownOnline(real) { return Math.max(2, (real || 0) + onlineBoost()); }
   function renderCounter(total, todayV, real) {
-    $('#visit-counter').innerHTML = '香客足跡 <b>' + total.toLocaleString() + '</b> 次 ｜ <span class="online-dot"></span>線上 <b>' + shownOnline(real) + '</b> 人';
+    $('#visit-counter').innerHTML = '<div class="stat"><b>' + total.toLocaleString() + '</b><span>香客足跡</span></div>' +
+      '<div class="stat"><b><span class="online-dot"></span>' + shownOnline(real) + '</b><span>此刻線上</span></div>';
   }
   async function pingVisit() {
     const ln = localCount();
@@ -40,7 +41,7 @@
         } catch (e) {}
       }, 25000);
     } catch (e) {
-      $('#visit-counter').innerHTML = '本機瀏覽 <b>' + ln + '</b> 次 ｜ <span class="online-dot"></span>線上 <b>' + shownOnline(0) + '</b> 人';
+      $('#visit-counter').innerHTML = '<div class="stat"><b>' + ln + '</b><span>本機瀏覽</span></div><div class="stat"><b><span class="online-dot"></span>' + shownOnline(0) + '</b><span>此刻線上</span></div>';
     }
   }
 
@@ -389,7 +390,11 @@
         '<div><label>格局．' + bd.geju + '</label>月令' + bd.monthZ + '藏「' + CANG[bd.monthZ].join('、') + '」，取' + (bd.touchu ? '透干之「' + bd.geStem + '」' : '本氣「' + bd.geStem + '」') + '（' + bd.geTg + '）立格。' + GEJU_DESC[bd.geju] + cite('zp') + '</div>' +
         '<div><label>命中主導十神．' + bd.domTg + '（' + TG_PLAIN[bd.domTg] + '）</label>' + TG_DESC[bd.domTg] + cite('sm') + '</div>' +
         '<div><label>用神喜忌</label>' + (bd.strong ? '身強宜洩、耗、剋（扶抑法）' : '身弱宜生、扶（扶抑法）') + (bd.tiaohou ? '；' + bd.tiaohou.txt : '') +
-        '<br>綜合取用：「<b>' + bd.fav.join('、') + '</b>」為你的開運五行' + (baziRes.missing.length ? '；命中缺「' + baziRes.missing.join('、') + '」，可藉' + baziRes.missing.map(e => ELEM_INFO[e].color.split('、')[0]).join('與') + '色系補足' : '；五行俱全，屬均衡之命') + '。' + cite('qt') + '</div>' +
+        '<br>綜合取用：「<b>' + bd.fav.join('、') + '</b>」為你的開運五行' + (baziRes.missing.length ? (function () {
+          const need = baziRes.missing.filter(e => bd.fav.includes(e)), skip = baziRes.missing.filter(e => !bd.fav.includes(e));
+          return (need.length ? '；命中缺「' + need.join('、') + '」且正是喜用，可藉' + need.map(e => ELEM_INFO[e].color.split('、')[0]).join('與') + '色系補足' : '') +
+            (skip.length ? '；命中雖缺「' + skip.join('、') + '」，但非你的喜用，不必刻意去補（古法重「用神」而非「補缺」）' : '');
+        })() : '；五行俱全，屬均衡之命') + '。' + cite('qt') + '</div>' +
         '<div><label>2026 丙午流年</label>流年天干丙為你的「' + bd.lnStem + '」、地支午（藏丁）為「' + bd.lnBranch + '」。' + LIUNIAN_TG[bd.lnStem] + (bd.lnBranch !== bd.lnStem ? '下半年地支之氣更顯：' + LIUNIAN_TG[bd.lnBranch] : '') + '</div>' +
         dayunHtml +
         '</div>' +
@@ -575,7 +580,7 @@
     const list = loadProfiles();
     if (!list.length) { box.style.display = 'none'; return; }
     box.style.display = '';
-    box.innerHTML = '<div class="wb-title">🍍 歡迎回來！點名字看今日運勢</div><div class="wb-list">' +
+    box.innerHTML = '<div class="wb-title">歡迎回來・點名字看今日運勢</div><div class="wb-list">' +
       list.map((p, i) => '<button class="wb-item" data-i="' + i + '">' + esc(p.name || '有緣人') + '<small>' + p.y + '/' + p.m + '/' + p.d + '</small></button>').join('') +
       '</div><div class="wb-warn">⚠️ 紀錄只存在這台裝置，清除 Cookie／瀏覽器資料或用無痕模式就會不見</div><button class="wb-clear" id="wb-clear">清除本機紀錄</button>';
     box.querySelectorAll('.wb-item').forEach(b => b.onclick = () => {

@@ -370,12 +370,13 @@ function luckyPrescription(profile) {
   const { baziRes, lp, zodiacKey } = profile;
   const z = ZODIAC[zodiacKey];
   let mainElem = null;
-  if (baziRes) mainElem = baziRes.missing[0] || baziRes.favorable[0];
+  // 以用神為主（《子平真詮》取用），缺的五行只有在也是喜用時才補
+  if (baziRes) mainElem = baziRes.favorable.find(e => baziRes.missing.includes(e)) || baziRes.favorable[0];
   const ei = mainElem ? ELEM_INFO[mainElem] : null;
   const rng = mulberry32(seedHash(profile.seedStr + '#lucky'));
   return {
     elem: mainElem,
-    color: ei ? ei.color + '（補' + mainElem + '）' : z.h2.lucky.color,
+    color: ei ? ei.color + '（' + (baziRes.missing.includes(mainElem) ? '補' : '用神') + mainElem + '）' : z.h2.lucky.color,
     zColor: z.h2.lucky.color,
     nums: (ei ? ei.nums + '、' : '') + lp.final,
     dir: ei ? ei.dir : '—',

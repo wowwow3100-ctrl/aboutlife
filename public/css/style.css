@@ -547,10 +547,85 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .mc-detail { border: 1px solid var(--hair); border-left: 2px solid var(--cinnabar); padding: 14px 18px; background: rgba(255,255,255,.02); }
   .mc-dh { color: var(--gold-bright); font-size: 16px; margin-bottom: 8px; letter-spacing: .06em; }
 
+
+  /* 檢查修正 */
+  #r-months { display: block; }
+  .lucky-grid { grid-template-columns: repeat(3, 1fr); }
+  .site-title .seal { font-size: 32px; line-height: 1; }
   @media (max-width: 560px) {
     .site-title { font-size: 34px; letter-spacing: .14em; gap: 12px; }
     .site-title .seal { width: 44px; height: 44px; font-size: 16px; }
     .r-section .inner, .sys-body { padding-left: 18px; padding-right: 18px; }
     .r-name { font-size: 30px; }
+    .lucky-grid { grid-template-columns: repeat(2, 1fr); }
+    .site-title .seal { font-size: 24px; }
+  }
+}
+
+/* =====================================================================
+   首頁重設計 v2：對齊網格、單字篆印圖示、數據列
+   ===================================================================== */
+@media screen {
+  #screen-intro { max-width: 820px; margin: 0 auto; }
+  .home-hero { text-align: center; padding: 34px 0 10px; }
+  .home-eyebrow { display: inline-flex; align-items: center; gap: 14px; color: var(--gold); font-size: 13px; letter-spacing: .35em; text-indent: .35em; }
+  .home-eyebrow span { width: 44px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold)); }
+  .home-eyebrow span:last-child { background: linear-gradient(90deg, var(--gold), transparent); }
+  .home-h1 { margin: 22px 0 18px; font-size: 46px; line-height: 1.45; font-weight: 900; letter-spacing: .16em; text-indent: .16em; color: var(--ink);
+    background: linear-gradient(180deg, #fff7e2, #e7c887 70%, #b8914a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .home-lead { color: var(--ink-dim); font-size: 15.5px; line-height: 2; max-width: 600px; margin: 0 auto; }
+  .home-cta { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
+  .home-cta .btn-gold, .home-cta .btn-ghost { margin: 0; min-width: 200px; height: 56px; padding: 0 28px; font-size: 18px; letter-spacing: .3em; text-indent: .3em; display: inline-flex; align-items: center; justify-content: center; }
+  .home-cta .btn-ghost { font-size: 16px; letter-spacing: .2em; text-indent: .2em; }
+  .privacy-line { margin-top: 16px; font-size: 12.5px; color: #8f8068; letter-spacing: .12em; }
+  .home-stats { display: grid; grid-template-columns: 1fr 1fr; max-width: 420px; margin: 34px auto 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+  .home-stats .stat { padding: 16px 0 14px; text-align: center; }
+  .home-stats .stat + .stat { border-left: 1px solid var(--hair); }
+  .home-stats .stat b { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 28px; font-weight: 700; color: var(--gold-bright); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  .home-stats .stat span { display: block; margin-top: 4px; font-size: 12px; color: var(--ink-dim); letter-spacing: .3em; text-indent: .3em; }
+  .home-stats .online-dot { margin: 0; }
+
+  .home-section { margin-top: 64px; }
+  .home-sec-title { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; color: var(--gold-bright); font-size: 16px; letter-spacing: .4em; }
+  .home-sec-title::before, .home-sec-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--hair)); }
+  .home-sec-title::after { background: linear-gradient(90deg, var(--hair), transparent); }
+  .home-sec-title span { white-space: nowrap; text-indent: .4em; }
+
+  .sys-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--hair); border-left: 1px solid var(--hair); }
+  .sys-tile { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 26px 10px 22px; border-right: 1px solid var(--hair); border-bottom: 1px solid var(--hair); transition: background .25s; }
+  .sys-tile:hover { background: rgba(201,164,92,.05); }
+  .sys-glyph { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: var(--gold-bright);
+    border: 1px solid rgba(201,164,92,.45); border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(200,54,31,.22), transparent 70%); box-shadow: inset 0 0 0 4px rgba(14,12,11,1), inset 0 0 0 5px rgba(201,164,92,.18); }
+  .sys-tile:last-child .sys-glyph { color: #fbe9cf; background: linear-gradient(160deg, #d2432b, #9e2114); border-color: transparent; }
+  .sys-name { margin-top: 14px; font-size: 16px; color: var(--ink); letter-spacing: .12em; font-weight: 600; }
+  .sys-desc { margin-top: 4px; font-size: 12px; color: var(--ink-dim); letter-spacing: .04em; }
+
+  .home-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+  .home-steps .step { text-align: center; padding: 6px 12px; position: relative; }
+  .home-steps .step + .step::before { content: ''; position: absolute; left: 0; top: 26px; width: 1px; height: 60px; background: var(--hair); }
+  .home-steps i { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; font-style: normal; font-size: 16px; color: #fbe9cf; background: linear-gradient(160deg, #d2432b, #9e2114); border-radius: 3px; transform: rotate(-3deg); }
+  .home-steps b { display: block; margin-top: 12px; font-size: 17px; color: var(--gold-bright); letter-spacing: .2em; text-indent: .2em; }
+  .home-steps span { display: block; margin-top: 4px; font-size: 13px; color: var(--ink-dim); }
+
+  .home-foot { text-align: center; }
+  .home-foot .explain { max-width: none; margin: 0; }
+  .home-foot .disclaim { margin-top: 18px; }
+  .intro-return { margin-top: 22px; }
+  .intro-return .btn-ghost { text-decoration: none; display: inline-block; font-size: 14px; }
+  #welcome-back { margin: 30px auto 0; max-width: 560px; }
+  .wb-title { font-size: 15px; letter-spacing: .2em; }
+
+  @media (max-width: 760px) { .sys-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px) {
+    .home-h1 { font-size: 32px; letter-spacing: .1em; text-indent: .1em; }
+    .br-desk { display: none; }
+    .home-lead { font-size: 14.5px; padding: 0 6px; }
+    .home-cta { flex-direction: column; gap: 12px; }
+    .home-cta .btn-gold, .home-cta .btn-ghost { width: 100%; max-width: 320px; }
+    .sys-grid { grid-template-columns: repeat(2, 1fr); }
+    .sys-tile { padding: 20px 8px 18px; }
+    .home-steps { grid-template-columns: 1fr; gap: 22px; }
+    .home-steps .step + .step::before { display: none; }
+    .home-section { margin-top: 48px; }
   }
 }
