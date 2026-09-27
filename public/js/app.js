@@ -363,7 +363,17 @@
     gtable += '</table>';
     const sc = sancai(gridElem(grids.tian), gridElem(grids.ren), gridElem(grids.di));
     cards.push({ id: 'name', icon: '✍️', title: '姓名學．三才五格', tag: '「' + esc(name) + '」筆畫 ' + state.strokes.join('・'),
-      html: gtable +
+      html: (function () {
+        const nd = nameDeep(name, state.strokes, grids, bd.fav, surname.length);
+        const ELC = { '木': 'e-木', '火': 'e-火', '土': 'e-土', '金': 'e-金', '水': 'e-水' };
+        return '<div class="name-chars">' + nd.perChar.map(c => '<div class="nc"><b>' + esc(c.ch) + '</b><span>' + c.s + ' 畫．' + (c.yin ? '陰' : '陽') + '</span><em class="' + ELC[c.e] + '">' + c.e + '</em><small>' + c.src + '五行</small></div>').join('') + '</div>' +
+          '<div class="c-grid">' +
+          '<div><label>名字與你的八字喜用（決定因人而異的關鍵）</label>' + nd.favVerdict + '<br><span class="plain">白話：同樣筆畫的名字，放在不同八字的人身上效果不同——姓名學真正要看的是「名字有沒有補到你缺的那一味」。</span>' + cite('qt') + '</div>' +
+          '<div><label>人格 ' + grids.ren + '．主運性格</label>' + REN_PERSONA[nd.renTail] + '</div>' +
+          '<div><label>五格生剋（人格為我）</label>' + GE_REL_TXT.zong[nd.rels.zong] + '<br>' + GE_REL_TXT.wai[nd.rels.wai] + '<br>' + GE_REL_TXT.di[nd.rels.di] + cite('xq') + '</div>' +
+          '<div><label>陰陽配置</label>' + nd.yy + '</div>' +
+          '</div>';
+      })() + gtable +
         '<div class="sancai-box"><div class="sancai-combo">三才配置：' + sc.combo + '<span class="luck-badge ' + sc.cls + '">' + sc.label + '</span></div><p>' + sc.desc + '</p></div>' +
         '<p class="c-note">＊筆畫依康熙字典並含數字慣例（四=4、五=5…），各流派或有一二畫之差，可回上一步微調。' + cite('xq') + '</p>' });
     }

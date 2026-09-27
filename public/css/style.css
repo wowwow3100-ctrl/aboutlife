@@ -649,3 +649,10 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .sys-name { font-size: 13px; margin-top: 7px; }
   .sys-desc { display: none; }
 }
+/* 姓名逐字五行 */
+.name-chars { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 4px 0 16px; }
+.name-chars .nc { min-width: 84px; text-align: center; border: 1px solid var(--hair, rgba(201,164,92,.22)); padding: 10px 8px; background: rgba(255,255,255,.02); }
+.name-chars .nc b { display: block; font-size: 30px; color: var(--gold-bright); line-height: 1.2; }
+.name-chars .nc span { display: block; font-size: 12px; color: var(--ink-dim); margin-top: 4px; }
+.name-chars .nc em { display: inline-block; font-style: normal; font-weight: 700; font-size: 15px; margin-top: 4px; }
+.name-chars .nc small { display: block; font-size: 10.5px; color: #7d705b; }

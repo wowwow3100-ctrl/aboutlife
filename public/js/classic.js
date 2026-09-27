@@ -300,3 +300,58 @@ function transitNotes(key) {
   if (mutable.includes(key)) out.push('天王星於 2026 年 4 月進入雙子座，變動星座首當其衝：生活與工作型態求新求變，彈性就是你的優勢。');
   return out;
 }
+
+// ---------- 姓名學深化（熊崎五格生剋＋八字喜用配名） ----------
+// 人格數尾數性格（熊崎式人格五行）
+const REN_PERSONA = {
+  1: '人格屬陽木：主見強、有上進心，像大樹一樣要往上長，缺點是不太肯低頭。',
+  2: '人格屬陰木：溫和有彈性，擅長配合與累積，外柔內韌，但容易想太多、下決定慢。',
+  3: '人格屬陽火：熱情外放、反應快，天生帶氣場，但情緒來得快也去得快。',
+  4: '人格屬陰火：心思細、有品味，熱情藏在內心，對人好但不輕易表露。',
+  5: '人格屬陽土：穩重可靠、重信用，是大家的依靠，缺點是固執、變通慢。',
+  6: '人格屬陰土：包容務實、會照顧人，做事踏實但容易委屈自己。',
+  7: '人格屬陽金：果斷剛直、講義氣，執行力強，說話直接易得罪人。',
+  8: '人格屬陰金：意志堅定、重原則，外表冷靜內心有火，做事一板一眼。',
+  9: '人格屬陽水：聰明靈活、點子多、交遊廣，但定性不足、容易分心。',
+  0: '人格屬陰水：思慮深、直覺敏銳，擅長觀察與謀略，內心世界豐富但易悶。'
+};
+// 五格生剋：人格對總格／外格／地格（關係以「對方 對 人格」論）
+const GE_REL_TXT = {
+  zong: { '生入': '總格生人格：中晚年有福報，努力容易被回報，後勁足。', '比和': '總格與人格同氣：人生目標與個性一致，做自己最有成就。', '生出': '人格生總格：一生多為家庭與事業付出，辛苦但有成果。', '剋入': '總格剋人格：中年後壓力較大，目標定得太高易累，宜量力。', '剋出': '人格剋總格：意志強、能掌控人生方向，但要防過度操勞。' },
+  wai: { '生入': '外格生人格：人緣好、外面常有貴人幫，出門在外比在家順。', '比和': '外格與人格同氣：朋友同頻，人際和諧，合作順利。', '生出': '人格生外格：對朋友慷慨付出，人緣好但要防被佔便宜。', '剋入': '外格剋人格：外界壓力與是非較多，慎選朋友、少作保。', '剋出': '人格剋外格：在人群中有主導力，但易給人強勢感。' },
+  di: { '生入': '地格生人格：家庭與部屬是後盾，基礎穩、少年運順。', '比和': '地格與人格同氣：家庭和睦，與晚輩部屬相處融洽。', '生出': '人格生地格：照顧家人與部屬不遺餘力，是家中支柱。', '剋入': '地格剋人格：家務或部屬事多煩心，早年基礎較辛苦。', '剋出': '人格剋地格：對家人部屬要求高，宜多些耐心。' }
+};
+// 關係：rel(a,b) 以「a 對 b」表示（a 生 b = 生出）；此處要「他格 對 人格」，換算成人格視角
+function relToRen(otherE, renE) {
+  if (otherE === renE) return '比和';
+  if (SHENG[otherE] === renE) return '生入';
+  if (SHENG[renE] === otherE) return '生出';
+  if (KE[otherE] === renE) return '剋入';
+  return '剋出';
+}
+function numElem(n) { const d = n % 10; return d === 1 || d === 2 ? '木' : d === 3 || d === 4 ? '火' : d === 5 || d === 6 ? '土' : d === 7 || d === 8 ? '金' : '水'; }
+function nameDeep(name, strokes, grids, fav, surLen) {
+  const chars = [...name];
+  const perChar = chars.map((ch, i) => {
+    const re = GEN.RADELEM && GEN.RADELEM[ch];
+    return { ch, s: strokes[i], e: re || numElem(strokes[i]), src: re ? '字形' : '數理', yin: strokes[i] % 2 === 0 };
+  });
+  const renE = numElem(grids.ren);
+  const rels = {
+    zong: relToRen(numElem(grids.zong), renE),
+    wai: relToRen(numElem(grids.wai), renE),
+    di: relToRen(numElem(grids.di), renE)
+  };
+  // 陰陽配置（熊崎：全陽或全陰為偏枯）
+  const yins = perChar.filter(c => c.yin).length;
+  const yy = yins === 0 ? '全陽（筆畫皆奇數）：衝勁足但偏剛，宜學柔軟。' : yins === chars.length ? '全陰（筆畫皆偶數）：細膩內斂但偏柔，宜多主動。' : '陰陽相間：剛柔並濟，配置平衡。';
+  // 名字（不含姓）與喜用對照
+  const givenChars = perChar.slice(surLen || 1);
+  const hit = givenChars.filter(c => fav.includes(c.e));
+  const miss = givenChars.filter(c => !fav.includes(c.e));
+  let favVerdict;
+  if (hit.length === givenChars.length) favVerdict = '名字每個字都落在你的喜用五行（' + fav.join('、') + '），名字本身就在幫你補運，屬「名助命」的好名。';
+  else if (hit.length) favVerdict = '「' + hit.map(c => c.ch).join('、') + '」屬' + [...new Set(hit.map(c => c.e))].join('、') + '，正是你的喜用，有補運之效；「' + miss.map(c => c.ch).join('、') + '」屬' + [...new Set(miss.map(c => c.e))].join('、') + '，對你較中性。';
+  else favVerdict = '名字的五行（' + [...new Set(givenChars.map(c => c.e))].join('、') + '）都不是你的喜用（' + fav.join('、') + '），名字對命局助力有限，可用小名、筆名或日常配色補足喜用。';
+  return { perChar, renE, renTail: grids.ren % 10, rels, yy, favVerdict, hitCount: hit.length, givenCount: givenChars.length };
+}
