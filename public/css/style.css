@@ -630,3 +630,22 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   }
 }
 @media screen { .home-systems { margin-top: 44px; } .home-systems + .home-cta { margin-top: 40px; } }
+/* 十二門命理：精簡高度（桌機 6×2、平板 4×3、手機 3×4） */
+@media screen {
+  .home-systems { margin-top: 36px; }
+  .home-systems .home-sec-title { margin-bottom: 18px; font-size: 14px; }
+  .sys-grid { grid-template-columns: repeat(6, 1fr); }
+  .sys-tile { padding: 16px 6px 14px; }
+  .sys-glyph { width: 40px; height: 40px; font-size: 18px; box-shadow: inset 0 0 0 3px rgba(14,12,11,1), inset 0 0 0 4px rgba(201,164,92,.18); }
+  .sys-name { margin-top: 9px; font-size: 14px; letter-spacing: .08em; }
+  .sys-desc { margin-top: 2px; font-size: 11px; line-height: 1.5; }
+  .home-systems + .home-cta { margin-top: 32px; }
+}
+@media screen and (max-width: 760px) { .sys-grid { grid-template-columns: repeat(4, 1fr); } }
+@media screen and (max-width: 560px) {
+  .sys-grid { grid-template-columns: repeat(3, 1fr); }
+  .sys-tile { padding: 12px 4px 10px; }
+  .sys-glyph { width: 34px; height: 34px; font-size: 16px; }
+  .sys-name { font-size: 13px; margin-top: 7px; }
+  .sys-desc { display: none; }
+}
