@@ -13,20 +13,27 @@ const STATS_FILE = path.join(DATA_DIR, 'stats.json');
 // 無既有統計檔時的起始值（可用 BASE_TOTAL 環境變數覆蓋）
 const BASE_TOTAL = parseInt(process.env.BASE_TOTAL || '112', 10);
 let stats = { total: BASE_TOTAL, vids: {}, daily: {}, events: [] };
-try {
-  if (fs.existsSync(STATS_FILE)) stats = Object.assign(stats, JSON.parse(fs.readFileSync(STATS_FILE, 'utf8')));
-} catch (e) { console.log('統計檔讀取失敗，重新開始', e.message); }
+const BAK_FILE = STATS_FILE + '.bak';
+function tryLoad(f) { try { if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { console.log('讀取失敗', f, e.message); } return null; }
+const loaded = tryLoad(STATS_FILE) || tryLoad(BAK_FILE);
+if (loaded) stats = Object.assign(stats, loaded);
+else if (fs.existsSync(STATS_FILE)) { try { fs.copyFileSync(STATS_FILE, STATS_FILE + '.corrupt-' + Date.now()); } catch (e) {} }
+console.log('統計載入：DATA_DIR=' + DATA_DIR + '，累計 ' + stats.total);
 
+// 原子寫入：先寫暫存檔再改名，並保留上一版備份，避免部署中斷造成檔案損毀歸零
+function saveNow() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    const tmp = STATS_FILE + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(stats));
+    if (fs.existsSync(STATS_FILE)) { try { fs.copyFileSync(STATS_FILE, BAK_FILE); } catch (e) {} }
+    fs.renameSync(tmp, STATS_FILE);
+  } catch (e) { console.log('統計儲存失敗', e.message); }
+}
 let saveTimer = null;
 function scheduleSave() {
   if (saveTimer) return;
-  saveTimer = setTimeout(() => {
-    saveTimer = null;
-    try {
-      if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-      fs.writeFileSync(STATS_FILE, JSON.stringify(stats));
-    } catch (e) { console.log('統計儲存失敗', e.message); }
-  }, 1500);
+  saveTimer = setTimeout(() => { saveTimer = null; saveNow(); }, 1500);
 }
 function todayStr() {
   const d = new Date();
@@ -208,4 +215,5 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('  停止：按 Ctrl+C 或關閉此視窗');
   console.log('==============================================');
 });
-process.on('SIGINT', () => { try { fs.writeFileSync(STATS_FILE, JSON.stringify(stats)); } catch (e) {} process.exit(0); });
+// Railway 重新部署時送 SIGTERM：先存檔再結束
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { saveNow(); process.exit(0); });
