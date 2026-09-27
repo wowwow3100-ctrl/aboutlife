@@ -1,0 +1,15 @@
+{
+  "name": "旺來開運所",
+  "short_name": "旺來開運所",
+  "description": "免費線上命理：八字、紫微、星座、姓名學一次合參",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0c0b",
+  "theme_color": "#0e0c0b",
+  "lang": "zh-Hant-TW",
+  "icons": [
+    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

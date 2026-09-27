@@ -751,7 +751,7 @@
     const p = r.persona || {};
     const d = r.daily || {};
     const lines = [
-      '🏮 旺來開運所．命理精簡報告',
+      '🍍 旺來開運所．命理精簡報告',
       r.name + ' ' + r.honorTxt + '｜國曆 ' + r.ymd,
       r.zIcon + ' ' + r.zName + '｜' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）｜靈數 ' + r.lpTxt + '（' + r.lpKey + '）｜日主 ' + r.dm,
       '── ✧ 你是怎樣的人 ──',
@@ -803,7 +803,7 @@
     ) : '';
 
     $('#compact-body').innerHTML =
-      '<div class="cp-title">🏮 旺來開運所．命理精簡報告</div>' +
+      '<div class="cp-title">旺來開運所．命理精簡報告</div>' +
       '<div class="cp-name">' + esc(r.name) + ' ' + r.honorTxt + '<span>國曆 ' + r.ymd + '</span></div>' +
       '<div class="cp-chips"><span>' + r.zIcon + ' ' + r.zName + '（' + r.decanN + '區）</span><span>' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）</span><span>靈數 ' + r.lpTxt + '</span><span>日主 ' + r.dm + '</span></div>' +
       '<div class="cp-section cp-persona"><div class="cp-section-title">✧ 你是怎樣的人</div>' + personaHtml + '</div>' +
