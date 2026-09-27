@@ -21,6 +21,7 @@ else if (fs.existsSync(STATS_FILE)) { try { fs.copyFileSync(STATS_FILE, STATS_FI
 console.log('統計載入：DATA_DIR=' + DATA_DIR + '，累計 ' + stats.total);
 
 // 原子寫入：先寫暫存檔再改名，並保留上一版備份，避免部署中斷造成檔案損毀歸零
+let lastSaveErr = null, lastSaveAt = null;
 function saveNow() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -28,7 +29,8 @@ function saveNow() {
     fs.writeFileSync(tmp, JSON.stringify(stats));
     if (fs.existsSync(STATS_FILE)) { try { fs.copyFileSync(STATS_FILE, BAK_FILE); } catch (e) {} }
     fs.renameSync(tmp, STATS_FILE);
-  } catch (e) { console.log('統計儲存失敗', e.message); }
+    lastSaveAt = new Date().toISOString(); lastSaveErr = null;
+  } catch (e) { lastSaveErr = e.message; console.log('統計儲存失敗', e.message); }
 }
 let saveTimer = null;
 function scheduleSave() {
@@ -218,6 +220,7 @@ const server = http.createServer((req, res) => {
       events: { today: (stats.ev || {})[day] || {}, total: stats.evTotal || {} },
       daily: days.map(d => Object.assign({ d, v: stats.daily[d].v, u: stats.daily[d].u }, (stats.ev || {})[d] || {})),
       devices: dev,
+      storage: { dataDir: DATA_DIR, envSet: !!process.env.DATA_DIR, fileExists: fs.existsSync(STATS_FILE), lastSaveAt, lastSaveErr, bootLoaded: !!loaded },
       ai: { enabled: !!process.env.ANTHROPIC_API_KEY, model: AI_MODEL, usedToday: aiDay === day ? aiDayCount : 0, limit: AI_DAILY_LIMIT }
     }));
     return;
