@@ -464,15 +464,33 @@
       '<p class="daily-come">📅 今日運勢每天換一次，命盤已存在你的裝置裡——明天回來首頁點你的名字，一秒就能看。<br>⚠️ 清除 Cookie／瀏覽器資料、無痕模式或換手機，紀錄會消失，建議順手「存成圖片」留底。</p>';
     saveProfile();
 
+    const _copeParts = ZODIAC_COPE[zodiacKey].split('——');
     lastResult = {
       name: dispName, honorTxt: hasName ? honor() : '', ymd: y + '/' + m + '/' + d,
       zName: Z.name, zIcon: Z.icon, decanN: decan.n, animal: sx.animal, sxIcon: SX.icon, sxRel: SX.rel,
       lpTxt: (lp.master ? lp.master + '/' + lp.final : String(lp.final)), lpKey: NUMEROLOGY[lp.master || lp.final].key, py,
       scores, bestName: ASPECT_NAME[best], bestScore: scores[best],
-      cope1: ZODIAC_COPE[zodiacKey].split('——')[0], dm: baziRes.dayMaster + GAN_ELEM[baziRes.dayMaster], dmStyle: DM_STYLE[baziRes.dayMaster],
+      cope1: _copeParts[0], dm: baziRes.dayMaster + GAN_ELEM[baziRes.dayMaster], dmStyle: DM_STYLE[baziRes.dayMaster],
       lucky, tarotTxt: T.n + (tarot.upright ? '（正位）' : '（逆位）'), tarotAdv: T.adv,
       missing: baziRes.missing.join('、') || '無', zH2: Z.h2.overall,
-      bestH2: Z.h2[{ wealth: 'money', love: 'love', career: 'career', health: 'health', social: 'overall' }[best]] || Z.h2.overall
+      bestH2: Z.h2[{ wealth: 'money', love: 'love', career: 'career', health: 'health', social: 'overall' }[best]] || Z.h2.overall,
+      // ---- 精簡版 Plan C：性格深度素材 ----
+      persona: {
+        zoneTrait: Z.trait,
+        sxTrait: SX.trait,
+        copeCore: _copeParts[0] || '',
+        copeDesc: _copeParts[1] || '',
+        numWork: NUM_WORK[lp.master || lp.final] || '',
+        dmStyle: DM_STYLE[baziRes.dayMaster] || '',
+        bloodMatch: (blood && blood !== '不知道' && BLOOD[blood]) ? BLOOD[blood].match : ''
+      },
+      // ---- 精簡版 Plan C：今日運勢完整素材 ----
+      daily: {
+        md: (dly.date.getMonth() + 1) + '月' + dly.date.getDate() + '日',
+        gz: dly.gz, tg: dly.tg, tgPlain: TG_PLAIN[dly.tg] || '',
+        score: dly.score, color: dly.color, dir: dly.dir,
+        text: dly.text, yi: dly.yi, ji: dly.ji, basis: dly.basis
+      }
     };
     // AI 解讀用命盤摘要（不含姓名與生日）
     const focusTxt = { overall: '整體', money: '財運', love: '愛情', career: '事業', health: '健康' }[state.focus];
@@ -725,37 +743,68 @@
   function buildCompactText() {
     const r = lastResult;
     if (!r) return '';
-    return [
+    const p = r.persona || {};
+    const d = r.daily || {};
+    const lines = [
       '🏮 旺來開運所．命理精簡報告',
       r.name + ' ' + r.honorTxt + '｜國曆 ' + r.ymd,
       r.zIcon + ' ' + r.zName + '｜' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）｜靈數 ' + r.lpTxt + '（' + r.lpKey + '）｜日主 ' + r.dm,
+      '── ✧ 你是怎樣的人 ──',
+      p.zoneTrait || '',
+      p.sxTrait || '',
+      '遇事：「' + (p.copeCore || '') + '」——' + (p.copeDesc || ''),
+      '決策：' + (p.numWork || '') + '　｜　日主 ' + r.dm + '——' + (p.dmStyle || ''),
+      (p.bloodMatch ? '血型：' + p.bloodMatch : '')
+    ];
+    if (d.md) {
+      lines.push(
+        '── 🌤 今日運勢 ' + d.md + '．' + d.gz + '日 ──',
+        d.score + ' 分｜' + d.tg + '日．' + d.tgPlain + '｜🎨 ' + d.color + '｜🧭 ' + d.dir,
+        '依據：' + d.basis,
+        d.text,
+        '✅ 宜：' + d.yi + '　🚫 忌：' + d.ji
+      );
+    }
+    lines.push(
       '── 2026 下半年五運 ──',
-      '財運 ' + r.scores.wealth + '｜愛情 ' + r.scores.love + '｜事業 ' + r.scores.career + '｜健康 ' + r.scores.health + '｜貴人 ' + r.scores.social,
-      '最旺：' + r.bestName + '（' + r.bestScore + ' 分）',
-      '處事風格：' + r.cope1 + '；' + r.dmStyle,
-      '五行補氣：缺' + r.missing + '｜開運色 ' + r.lucky.color + '｜幸運數字 ' + r.lucky.nums + '｜吉方 ' + r.lucky.dir,
-      '幸運月份：' + r.lucky.month + '｜今日塔羅：' + r.tarotTxt,
+      '💰 財 ' + r.scores.wealth + '｜💗 愛 ' + r.scores.love + '｜💼 事 ' + r.scores.career + '｜🏥 健 ' + r.scores.health + '｜🤝 貴 ' + r.scores.social,
+      '🎨 ' + r.lucky.color + '｜🧭 ' + r.lucky.dir + '｜🍀 幸運月 ' + r.lucky.month,
       '──────────',
       '完整報告：' + siteUrl(),
       'by 旺來 ' + SITE.authorHandle + '（Threads：' + SITE.authorUrl + '）'
-    ].join('\n');
+    );
+    return lines.filter(Boolean).join('\n');
   }
   function openCompact() {
     const r = lastResult;
     if (!r) return;
+    const p = r.persona || {};
+    const d = r.daily || {};
+    // 拼「你是怎樣的人」段落：星座主軸 + 生肖補刀 + 靈數決策 + 日主 + 血型
+    const personaHtml =
+      '<p>' + esc(p.zoneTrait || '') + '</p>' +
+      '<p>' + esc(p.sxTrait || '') + '</p>' +
+      '<p>遇事的預設模式是「<b>' + esc(p.copeCore) + '</b>」——' + esc(p.copeDesc) + '</p>' +
+      '<p>做事與決策風格：' + esc(p.numWork) + '<br>八字日主 <b>' + esc(r.dm) + '</b>——' + esc(p.dmStyle) + '。</p>' +
+      (p.bloodMatch ? '<p>血型面向：' + esc(p.bloodMatch) + '</p>' : '');
+    // 今日運勢完整區塊
+    const todayHtml = d.md ? (
+      '<div class="cp-today-head"><b class="cp-today-score">' + d.score + '<small>分</small></b>' +
+      '<div><b>📅 ' + d.md + '．' + d.gz + '日</b>　<span class="cp-today-tg">' + d.tg + '日．' + esc(d.tgPlain) + '</span><br>' +
+      '<span class="cp-today-meta">🎨 幸運色 ' + esc(d.color) + '　🧭 吉方 ' + esc(d.dir) + '</span></div></div>' +
+      '<p class="cp-today-basis">依據：' + esc(d.basis) + '。</p>' +
+      '<p>' + esc(d.text) + '</p>' +
+      '<p>✅ 宜：' + esc(d.yi) + '　🚫 忌：' + esc(d.ji) + '</p>'
+    ) : '';
+
     $('#compact-body').innerHTML =
       '<div class="cp-title">🏮 旺來開運所．命理精簡報告</div>' +
       '<div class="cp-name">' + esc(r.name) + ' ' + r.honorTxt + '<span>國曆 ' + r.ymd + '</span></div>' +
       '<div class="cp-chips"><span>' + r.zIcon + ' ' + r.zName + '（' + r.decanN + '區）</span><span>' + r.sxIcon + ' 屬' + r.animal + '（' + r.sxRel + '）</span><span>靈數 ' + r.lpTxt + '</span><span>日主 ' + r.dm + '</span></div>' +
-      '<div class="cp-scores">' +
-      ['財運|wealth', '愛情|love', '事業|career', '健康|health', '貴人|social'].map(x => {
-        const [nm, k] = x.split('|');
-        return '<div><label>' + nm + '</label><b>' + r.scores[k] + '</b></div>';
-      }).join('') + '</div>' +
-      '<div class="cp-line">⭐ 最旺：<b>' + r.bestName + '（' + r.bestScore + ' 分）</b>——' + esc(r.bestH2) + '</div>' +
-      '<div class="cp-line">🧭 處事風格：' + esc(r.cope1) + '；' + esc(r.dmStyle) + '。</div>' +
-      '<div class="cp-line">🎨 開運：缺' + r.missing + '｜' + esc(r.lucky.color) + '｜數字 ' + esc(String(r.lucky.nums)) + '｜吉方 ' + r.lucky.dir + '｜幸運月 ' + r.lucky.month + '</div>' +
-      '<div class="cp-line">🃏 今日塔羅：' + r.tarotTxt + '——' + esc(r.tarotAdv) + '</div>' +
+      '<div class="cp-section cp-persona"><div class="cp-section-title">✧ 你是怎樣的人</div>' + personaHtml + '</div>' +
+      '<div class="cp-section cp-today"><div class="cp-section-title">🌤 今日運勢</div>' + todayHtml + '</div>' +
+      '<div class="cp-scores-inline"><span>💰 財 ' + r.scores.wealth + '</span><span>💗 愛 ' + r.scores.love + '</span><span>💼 事 ' + r.scores.career + '</span><span>🏥 健 ' + r.scores.health + '</span><span>🤝 貴 ' + r.scores.social + '</span></div>' +
+      '<div class="cp-line cp-lucky-inline">🎨 ' + esc(r.lucky.color) + '｜🧭 ' + r.lucky.dir + '｜🍀 幸運月 ' + r.lucky.month + '</div>' +
       '<div class="cp-foot">完整報告：' + siteUrl() + '<br>by 旺來 <a href="' + SITE.authorUrl + '" target="_blank" rel="noopener">' + SITE.authorHandle + '</a></div>';
     $('#compact-modal').classList.add('open');
   }

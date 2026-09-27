@@ -15,8 +15,11 @@ git config user.email >nul 2>nul || git config user.email "wowwow3100@gmail.com"
 git remote get-url origin >nul 2>nul
 if errorlevel 1 git remote add origin https://github.com/wowwow3100-ctrl/aboutlife.git
 
+tasklist /FI "IMAGENAME eq git.exe" 2>nul | find /I "git.exe" >nul
+if errorlevel 1 (if exist ".git\index.lock" del /F /Q ".git\index.lock")
+if errorlevel 1 (if exist ".git\HEAD.lock" del /F /Q ".git\HEAD.lock")
 git add -A
-git commit -m "fortune site update" >nul 2>nul
+git commit -m "fortune site update"
 
 echo.
 echo Pushing to GitHub... (a browser login window may pop up - please authorize)

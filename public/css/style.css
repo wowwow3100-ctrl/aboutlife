@@ -149,6 +149,30 @@ body::before {
 .compact-actions { display: flex; justify-content: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
 @media (max-width: 480px) { .cp-scores { grid-template-columns: repeat(3, 1fr); } }
 
+/* ---- 精簡版 Plan C：性格段 / 今日運勢 / 分數 chip / 開運一行 ---- */
+.cp-section { margin: 14px 0; padding: 12px 14px; border: 1px solid rgba(217,164,65,.28); border-radius: 6px; background: rgba(217,164,65,.04); }
+.cp-section-title { color: var(--gold-bright); font-weight: 700; letter-spacing: .08em; font-size: 14px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed rgba(217,164,65,.28); }
+.cp-persona p { font-size: 14px; color: var(--ink); line-height: 1.85; margin: 6px 0; }
+.cp-persona b { color: var(--gold-bright); }
+.cp-today p { font-size: 14px; color: var(--ink); line-height: 1.8; margin: 6px 0; }
+.cp-today b { color: var(--gold-bright); }
+.cp-today-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.cp-today-score { font-size: 30px; color: var(--gold-bright); font-weight: 800; line-height: 1; padding-right: 10px; border-right: 1px solid rgba(217,164,65,.35); min-width: 60px; text-align: center; }
+.cp-today-score small { font-size: 12px; color: var(--ink-dim); font-weight: 400; margin-left: 2px; }
+.cp-today-tg { font-size: 12.5px; color: var(--ink-dim); }
+.cp-today-meta { font-size: 13px; color: var(--ink); }
+.cp-today-basis { font-size: 12.5px !important; color: var(--ink-dim) !important; font-style: italic; }
+.cp-scores-inline { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; margin: 10px 0; }
+.cp-scores-inline span { border: 1px solid rgba(217,164,65,.35); border-radius: 999px; padding: 3px 12px; font-size: 13px; color: var(--gold-bright); background: rgba(0,0,0,.18); font-weight: 600; }
+.cp-lucky-inline { text-align: center; font-size: 13.5px; color: var(--ink); }
+
+/* 列印時性格/今日區塊亦切成淺色 */
+body.print-compact .cp-section { background: #fdfaf3; border-color: #d4b26a; }
+body.print-compact .cp-section-title, body.print-compact .cp-today-score, body.print-compact .cp-persona b, body.print-compact .cp-today b { color: #7a5a1c; }
+body.print-compact .cp-persona p, body.print-compact .cp-today p, body.print-compact .cp-today-meta, body.print-compact .cp-lucky-inline { color: #333; }
+body.print-compact .cp-scores-inline span { color: #7a5a1c; background: #fdfaf3; border-color: #d4b26a; }
+body.print-compact .cp-today-basis, body.print-compact .cp-today-tg { color: #666 !important; }
+
 /* ---------- 表單 ---------- */
 .form-panel {
   border: 1px solid var(--gold-dim); border-radius: 6px; padding: 30px 26px;
