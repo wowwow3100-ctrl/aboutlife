@@ -346,14 +346,11 @@ function monthlyFortune(profileSeed, animalZhiIdx, favorable, animalName, luckyM
     let score = { sanhe: 2, liuhe: 2, same: 1, chong: -2, hai: -1, po: -1, none: 0 }[rel.k];
     const fav = favorable.includes(elem);
     if (fav) score += 1;
-    const isLucky = luckyMonthStr === (mm + '月');
-    if (isLucky) score += 1;
     const cls = score >= 2 ? 'good' : (score <= -1 ? 'bad' : 'mid');
     let basis = mm + '月為' + gz + '月（月支' + zhiCh + '屬' + elem + '），' + zhiCh + '與你的生肖' + animalName + rel.n;
     if (fav) basis += '；' + elem + '又是你的喜用五行';
-    if (isLucky) basis += '；並逢你的星座幸運月';
     const P = MONTH_TXT[cls];
-    const pts = Math.max(45, Math.min(96, Math.round(70 + score * 8 + (rng() * 8 - 4))));
+    const pts = Math.max(45, Math.min(96, 70 + score * 8));
     out.push({
       m: mm, title: MONTH_TITLE[mm], gz, cls, basis, pts,
       label: cls === 'good' ? '吉' : cls === 'bad' ? '慎' : '平',
@@ -366,24 +363,53 @@ function monthlyFortune(profileSeed, animalZhiIdx, favorable, animalName, luckyM
 }
 
 // ---------- 開運處方 ----------
-function luckyPrescription(profile) {
-  const { baziRes, lp, zodiacKey } = profile;
-  const z = ZODIAC[zodiacKey];
-  let mainElem = null;
-  // 以用神為主（《子平真詮》取用），缺的五行只有在也是喜用時才補
-  if (baziRes) mainElem = baziRes.favorable.find(e => baziRes.missing.includes(e)) || baziRes.favorable[0];
-  const ei = mainElem ? ELEM_INFO[mainElem] : null;
-  const rng = mulberry32(seedHash(profile.seedStr + '#lucky'));
+const ELEM_ACT = {
+  '木': '讀書進修、到綠地走走、早睡早起（木主生長）', '火': '運動流汗、多曬太陽、主動社交（火主熱與外放）',
+  '土': '整理環境、固定作息、按月存錢（土主穩定與承載）', '金': '斷捨離、訂規則與計畫、把話說清楚（金主決斷）',
+  '水': '旅行、閱讀思考、多跟人交流（水主流動與智慧）'
+};
+const ELEM_OVER = {
+  '木': '一次開太多新計畫、固執己見', '火': '衝動、熬夜、情緒性發言', '土': '拖延、堆積雜物、死守舊方法',
+  '金': '說話太硬、過度苛求自己和別人', '水': '想太多、作息不定、到處跑卻沒收尾'
+};
+const ELEM_WHY = {
+  color: '五色配五行：木青、火赤、土黃、金白、水黑（《素問．金匱真言論》）',
+  nums: '河圖生成數：天一生水地六成之、地二生火天七成之、天三生木地八成之、地四生金天九成之、天五生土地十成之',
+  dir: '五行方位：東木、南火、中央土、西金、北水；土另取後天八卦坤（西南）、艮（東北）',
+  item: '取「' + '{E}' + '」行的材質與顏色（五行取象），不是招財道具，是每天看到時的提醒',
+  care: '五行配五臟（《素問．陰陽應象大論》）；屬傳統養生觀念，不是醫療建議'
+};
+function luckyPrescription(profile, months) {
+  const { baziRes, lp } = profile;
+  const fav = baziRes.favorable, dmE = baziRes.dmElem;
+  // 開運五行：喜用中若有八字缺的，先補；否則取喜用首選（《子平真詮》以用神為主）
+  const E = fav.find(e => baziRes.missing.includes(e)) || fav[0];
+  const ei = ELEM_INFO[E];
+  const eWhy = '你的日主屬' + dmE + '、' + (baziRes.strong ? '身強' : '身弱') + '，喜用五行為「' + fav.join('、') + '」' +
+    (baziRes.missing.includes(E) ? '，其中「' + E + '」八字裡完全沒有，優先補它' : '，取首選「' + E + '」');
+  // 忌神：非喜用中最具代表者（身強忌比劫、印；身弱忌官殺、財、食傷）
+  const shengMe = Object.keys(SHENG).find(k => SHENG[k] === dmE);
+  const keMe = Object.keys(KE).find(k => KE[k] === dmE);
+  const order = baziRes.strong ? [dmE, shengMe] : [keMe, KE[dmE], SHENG[dmE]];
+  const J = order.find(e => !fav.includes(e)) || null;
+  const rows = [
+    { k: '開運色', v: ei.color, why: eWhy + '；' + ELEM_WHY.color },
+    { k: '幸運數字', v: ei.nums + '、' + lp.final, why: ei.nums + '＝' + E + '的河圖數（' + ELEM_WHY.nums + '）；' + lp.final + '＝你的生命靈數主命數' },
+    { k: '吉利方位', v: ei.dir, why: E + '對應' + ei.dir + '（' + ELEM_WHY.dir + '）' },
+    { k: '開運小物', v: ei.item, why: ELEM_WHY.item.replace('{E}', E) }
+  ];
+  let bestMonth = '—';
+  if (months && months.length) {
+    const top = Math.max(...months.map(x => x.pts));
+    const best = months.filter(x => x.pts === top);
+    bestMonth = best.map(x => x.m + '月').join('、');
+    rows.push({ k: '下半年旺月', v: bestMonth, why: best.map(x => x.basis).join('；') + '（逐月曲線中分數最高）' });
+  }
   return {
-    elem: mainElem,
-    color: ei ? ei.color + '（' + (baziRes.missing.includes(mainElem) ? '補' : '用神') + mainElem + '）' : z.h2.lucky.color,
-    zColor: z.h2.lucky.color,
-    nums: (ei ? ei.nums + '、' : '') + lp.final,
-    dir: ei ? ei.dir : '—',
-    item: ei ? ei.item : '貼身玉飾',
-    care: ei ? ei.care : '規律作息',
-    month: z.h2.lucky.month,
-    doTip: LUCKY_DO[Math.floor(rng() * LUCKY_DO.length)],
-    dontTip: LUCKY_DONT[Math.floor(rng() * LUCKY_DONT.length)]
+    elem: E, color: ei.color + '（' + (baziRes.missing.includes(E) ? '補' : '用神') + E + '）', nums: ei.nums + '、' + lp.final,
+    dir: ei.dir, item: ei.item, care: ei.care, month: bestMonth, rows,
+    doTip: ELEM_ACT[E], doWhy: '多做屬「' + E + '」的事，等於替命盤補上喜用',
+    dontTip: J ? ELEM_OVER[J] : '', dontWhy: J ? '「' + J + '」是你的忌神（' + (baziRes.strong ? '身強再助其旺，反成負擔' : '身弱再受其剋洩，更吃力') + '），這類狀態少一點' : '',
+    careWhy: ELEM_WHY.care
   };
 }

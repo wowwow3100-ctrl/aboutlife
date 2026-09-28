@@ -668,3 +668,11 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .dw-d.up { color: #7fc48b; } .dw-d.down { color: #e0694f; }
 .dw-sum { text-align: right; font-weight: 800; color: var(--gold-bright, #e8c877); padding-top: 6px; border-top: 1px solid rgba(217,164,65,.3); margin-top: 4px; }
 .dw-note { font-size: 11.5px; color: #8c7550; margin-top: 6px; }
+
+/* 開運處方：每項附依據 */
+.lucky-list { display: grid; gap: 8px; }
+.lk-row { display: grid; grid-template-columns: 86px 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px dashed rgba(217,164,65,.18); }
+.lk-k { color: #1a120c; background: #c9a45c; border-radius: 4px; text-align: center; font-size: 13px; padding: 2px 0; height: fit-content; }
+.lk-v { font-weight: 700; color: #f2e2c0; }
+.lk-why { display: block; font-weight: 400; font-size: 12.5px; color: #a58a5c; margin-top: 3px; line-height: 1.55; }
+.lucky-tips p { margin: 8px 0; }

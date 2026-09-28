@@ -374,10 +374,15 @@ function dailyFortune(dm, fav, date, ctx) {
   }
   let score = D.s + F.reduce((a, f) => a + f.d, 0);
   score = Math.max(35, Math.min(98, score));
-  const luckyElem = fav[0];
+  // 今日幸運五行：今天干支若已帶你的喜用，就順勢用它；否則取喜用首選來補
+  const baseE = ctx.mainElem || fav[0];
+  const luckyElem = gHit ? ge : zHit ? ze : baseE;
+  const colorWhy = (gHit || zHit ? '今天' + (gHit ? '天干' + g : '地支' + z) + '屬' + luckyElem + '，正是你的喜用，穿戴同色順勢加強'
+    : '今天干支屬' + ge + '、' + ze + '，都不是你的喜用，就用你的開運五行「' + luckyElem + '」（同下方開運處方）的顏色來補') +
+    '；' + luckyElem + '對應' + ELEM_INFO[luckyElem].color.split('、')[0] + '（五色配五行，《素問．金匱真言論》），方位' + ELEM_INFO[luckyElem].dir.split('、')[0] + '（五行方位）';
   const basis = F.map(f => f.h).join('、');
   return { date: dt, gz: g + z, tg, score, base: D.s, factors: F, jc, text: D.t, yi: D.yi, ji: D.ji, basis,
-    color: ELEM_INFO[luckyElem].color.split('、')[0], dir: ELEM_INFO[luckyElem].dir };
+    color: ELEM_INFO[luckyElem].color.split('、')[0], dir: ELEM_INFO[luckyElem].dir.split('、')[0], colorWhy };
 }
 
 // ---------- 星座 2026 下半年行運 ----------

@@ -204,8 +204,8 @@
     const seedStr = name + '|' + y + '-' + m + '-' + d;
     const profile = { name, y, m, d, zodiacKey, animal: sx.animal, lp, grids, baziRes, hourIdx, blood, seedStr };
     const scores = computeScores(profile);
-    const lucky = luckyPrescription(profile);
-    const months = monthlyFortune(seedStr, baziRes.pillars.year.zhi, baziRes.favorable, sx.animal, Z.h2.lucky.month);
+    const months = monthlyFortune(seedStr, baziRes.pillars.year.zhi, baziRes.favorable, sx.animal);
+    const lucky = luckyPrescription(profile, months);
     const tarot = tarotDraw(seedStr);
     const lun = solar2lunar(y, m, d);
     const zw = ziwei(lun, hourIdx);
@@ -297,15 +297,10 @@
 
     // 開運處方
     $('#r-lucky').innerHTML =
-      '<div class="lucky-grid">' +
-      '<div><label>開運色</label>' + lucky.color + '</div>' +
-      '<div><label>星座幸運色</label>' + lucky.zColor + '</div>' +
-      '<div><label>幸運數字</label>' + lucky.nums + '</div>' +
-      '<div><label>吉利方位</label>' + lucky.dir + '</div>' +
-      '<div><label>開運小物</label>' + lucky.item + '</div>' +
-      '<div><label>幸運月份</label>' + lucky.month + '</div>' +
-      '</div>' +
-      '<div class="lucky-tips"><p>✅ 宜：' + lucky.doTip + '</p><p>🚫 ' + lucky.dontTip + '</p><p>🧘 養生：' + lucky.care + '</p></div>';
+      '<div class="lucky-list">' + lucky.rows.map(r => '<div class="lk-row"><div class="lk-k">' + r.k + '</div><div class="lk-v">' + r.v + '<div class="lk-why">為什麼：' + r.why + '</div></div></div>').join('') + '</div>' +
+      '<div class="lucky-tips"><p>✅ 宜：' + lucky.doTip + '<span class="lk-why">為什麼：' + lucky.doWhy + '</span></p>' +
+      (lucky.dontTip ? '<p>🚫 少：' + lucky.dontTip + '<span class="lk-why">為什麼：' + lucky.dontWhy + '</span></p>' : '') +
+      '<p>🧘 養生：' + lucky.care + '<span class="lk-why">為什麼：' + lucky.careWhy + '</span></p></div>';
 
     // ===== 各系統卡片 =====
     const cards = [];
@@ -477,11 +472,12 @@
       '<div class="sys-body">' + c.html + '</div></section>').join('');
 
     // 今日運勢（每天不同，回訪誘因）
-    const dly = dailyFortune(baziRes.dayMaster, bd.fav, null, { dayZhi: baziRes.pillars.day.zhi, yearZhi: baziRes.pillars.year.zhi, sunKey: zodiacKey });
+    const dly = dailyFortune(baziRes.dayMaster, bd.fav, null, { dayZhi: baziRes.pillars.day.zhi, yearZhi: baziRes.pillars.year.zhi, sunKey: zodiacKey, mainElem: lucky.elem });
     $('#daily-date').textContent = (dly.date.getMonth() + 1) + '月' + dly.date.getDate() + '日．' + dly.gz + '日';
     $('#r-daily').innerHTML =
       '<div class="daily-top"><div class="daily-score">' + dly.score + '<small>分</small></div><div><b style="color:var(--gold-bright)">' + dly.tg + '日</b>．' + TG_PLAIN[dly.tg] + '<br>' +
       '<span style="font-size:14px">🎨 幸運色 ' + dly.color + '　🧭 吉方 ' + dly.dir + '</span></div></div>' +
+      '<p class="lk-why" style="margin:-2px 0 8px">🎨 為什麼是' + dly.color + '：' + dly.colorWhy + '</p>' +
       '<div class="daily-why"><div class="dw-title">🔍 今天的分數怎麼來的</div>' +
       dly.factors.map(f => '<div class="dw-row"><span class="dw-k">' + f.k + '</span><span class="dw-t"><b>' + f.h + '</b>　' + f.t + '</span><span class="dw-d ' + (f.d > 0 ? 'up' : f.d < 0 ? 'down' : '') + '">' + (f.k === '十神' ? dly.base : (f.d > 0 ? '+' + f.d : f.d < 0 ? f.d : '±0')) + '</span></div>').join('') +
       '<div class="dw-sum">合計 ' + dly.score + ' 分' + (dly.base + dly.factors.reduce((a, f) => a + f.d, 0) !== dly.score ? '（分數上下限 35–98）' : '') + '</div>' +
