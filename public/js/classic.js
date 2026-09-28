@@ -269,20 +269,115 @@ const DAILY_TG = {
   '偏印': { s: 66, t: '今日偏印當值：直覺敏銳、適合獨處思考與研究；人際上容易想太多。', yi: '閱讀、研究、冥想', ji: '疑神疑鬼' },
   '正印': { s: 88, t: '今日正印當值：貴人與長輩助力明顯，學習、考試、求助都順利。', yi: '讀書、請教、求援', ji: '固執己見' }
 };
-function dailyFortune(dm, fav, date) {
+// ---------- 今日運勢（多重依據，逐項加減分，全部攤開給使用者看） ----------
+const JIANCHU = ['建', '除', '滿', '平', '定', '執', '破', '危', '成', '收', '開', '閉'];
+const JIANCHU_INFO = {
+  '建': { d: 0, t: '建日：萬物初生，適合起頭、規劃、見長輩；不宜動土、搬遷。' },
+  '除': { d: 3, t: '除日：除舊布新，適合打掃、斷捨離、看醫生、處理舊帳。' },
+  '滿': { d: 0, t: '滿日：氣滿則溢，適合祈福、收成、聚餐；簽約大事宜保守。' },
+  '平': { d: 0, t: '平日：平穩無波，適合例行事務、修補關係；不宜冒險。' },
+  '定': { d: 3, t: '定日：安定之日，適合定案、簽約、訂婚、做長期決定。' },
+  '執': { d: 2, t: '執日：執守之日，適合執行計畫、收款、整理；不宜搬家遠行。' },
+  '破': { d: -6, t: '破日：黃曆「月破」大耗之日，諸事不宜開新局，宜收斂、只做例行。' },
+  '危': { d: 1, t: '危日：居安思危，做事多一分謹慎，登高涉險宜避；適合反省檢討。' },
+  '成': { d: 4, t: '成日：萬事易成，適合開業、簽約、告白、提案。' },
+  '收': { d: 0, t: '收日：收穫收斂，適合收帳、存錢、收尾；不宜開始新事。' },
+  '開': { d: 4, t: '開日：開通之日，適合開工、面試、出行、見新朋友。' },
+  '閉': { d: -2, t: '閉日：閉藏之日，適合休息、存錢、獨處；不宜開張、大型社交。' }
+};
+const SHA_DIR = { 8: '南', 0: '南', 4: '南', 2: '北', 6: '北', 10: '北', 5: '東', 9: '東', 1: '東', 11: '西', 3: '西', 7: '西' };
+const ZODIAC_ORDER = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'];
+const SIGN_ZH = ['牡羊座', '金牛座', '雙子座', '巨蟹座', '獅子座', '處女座', '天秤座', '天蠍座', '射手座', '魔羯座', '水瓶座', '雙魚座'];
+// 2026 行星逆行（依 2026 星曆；陰影期為逆行前後的「回顧區」）
+const RETRO_2026 = [
+  { p: '水星', from: [2, 26], to: [3, 20], pre: [2, 12], post: [4, 8], sign: '雙魚座', d: -3, t: '溝通、合約、交通、3C 易出錯，重要訊息多確認一次' },
+  { p: '水星', from: [6, 29], to: [7, 23], pre: [6, 13], post: [8, 7], sign: '巨蟹座', d: -3, t: '溝通、合約、交通、3C 易出錯，重要訊息多確認一次' },
+  { p: '水星', from: [10, 24], to: [11, 13], pre: [10, 4], post: [11, 30], sign: '天蠍座', d: -3, t: '溝通、合約、交通、3C 易出錯，重要訊息多確認一次' },
+  { p: '金星', from: [10, 3], to: [11, 14], pre: [9, 3], post: [12, 15], sign: '天蠍座→天秤座', d: -2, t: '感情與金錢價值觀重新檢視，舊情人舊帳可能回頭，大額消費與告白宜緩' },
+  { p: '土星', from: [7, 26], to: [12, 10], sign: '牡羊座', d: 0, t: '舊問題回頭要你處理，適合補基礎、不適合硬衝' }
+];
+function md(m, d) { return m * 100 + d; }
+function moonLongitude(y, m, d) {       // 台灣中午；低精度月球黃經（誤差約 1–2°）
+  const n = (Date.UTC(y, m - 1, d, 4) / 86400000) - 10957.5;
+  const r = Math.PI / 180;
+  const L = 218.316 + 13.176396 * n, M = (134.963 + 13.064993 * n) * r, F = (93.272 + 13.229350 * n) * r;
+  const D = (297.850 + 12.190749 * n) * r, Ms = (357.529 + 0.98560028 * n) * r;
+  const lon = L + 6.289 * Math.sin(M) + 1.274 * Math.sin(2 * D - M) + 0.658 * Math.sin(2 * D) + 0.214 * Math.sin(2 * M) - 0.186 * Math.sin(Ms) - 0.114 * Math.sin(2 * F);
+  return ((lon % 360) + 360) % 360;
+}
+function dailyFortune(dm, fav, date, ctx) {
+  ctx = ctx || {};
   const dt = date || new Date();
-  const ed = epochDays(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+  const Y = dt.getFullYear(), Mo = dt.getMonth() + 1, Dd = dt.getDate();
+  const ed = epochDays(Y, Mo, Dd);
   const di = ((ed % 60) + GEN.DAY_K + 60) % 60;
-  const g = GAN[di % 10], z = ZHI[di % 12];
+  const gi = di % 10, zi = di % 12;
+  const g = GAN[gi], z = ZHI[zi];
   const tg = tenGod(dm, g);
   const D = DAILY_TG[tg];
-  let score = D.s;
+  const F = [];                                   // 依據清單 {k, h, t, d}
+  F.push({ k: '十神', h: g + '日．' + tg, t: '今天是' + g + z + '日，天干「' + g + '」對你的日主「' + dm + '」是' + tg + '，定下今天的基調（基礎 ' + D.s + ' 分）', d: 0 });
+  // 五行喜忌
   const ge = GAN_ELEM[g], ze = ZHI_ELEM[z];
-  if (fav.includes(ge)) score += 5;
-  if (fav.includes(ze)) score += 4;
-  score = Math.min(98, score);
+  const gHit = fav.includes(ge), zHit = fav.includes(ze);
+  F.push({ k: '五行', h: g + ge + '．' + z + ze, t: '今日天干屬' + ge + '、地支屬' + ze + '；你的喜用五行是' + fav.join('、') + '，' +
+    (gHit && zHit ? '天干地支都是你需要的，順風日' : gHit ? '天干' + ge + '正是你的喜用' : zHit ? '地支' + ze + '正是你的喜用' : '兩者都不是你的喜用，氣場普通'), d: (gHit ? 5 : 0) + (zHit ? 4 : 0) + (!gHit && !zHit ? -2 : 0) });
+  // 日支 × 你的日支（自身與伴侶宮）
+  if (ctx.dayZhi != null) {
+    const r = zhiRel(zi, ctx.dayZhi);
+    const map = { liuhe: [6, '六合，人和、感情與合作都順'], sanhe: [4, '三合，容易得到助力'], same: [2, '比和，做自己最自在'], chong: [-8, '相沖，情緒、感情或身體易起波動，凡事慢半拍'], hai: [-4, '相害，小人口舌多，說話留三分'], po: [-3, '相破，計畫易被打斷，預留彈性'], none: [0, '無刑沖，平穩'] };
+    const [dv, tx] = map[r.k];
+    F.push({ k: '日支', h: z + '×' + ZHI[ctx.dayZhi], t: '今日地支「' + z + '」與你八字日支「' + ZHI[ctx.dayZhi] + '」（自身與伴侶宮）' + tx, d: dv });
+  }
+  // 黃曆沖煞 × 你的生肖
+  const chongZ = (zi + 6) % 12;
+  let sxD = 0, sxT = '黃曆：今日沖' + ZHI_ANIMAL[ZHI[chongZ]] + '、煞' + SHA_DIR[zi];
+  if (ctx.yearZhi != null) {
+    const r2 = zhiRel(zi, ctx.yearZhi);
+    const an = ZHI_ANIMAL[ZHI[ctx.yearZhi]];
+    if (r2.k === 'chong') { sxD = -6; sxT += '——正好沖你的生肖「' + an + '」，今天低調、不做重大決定'; }
+    else if (r2.k === 'liuhe' || r2.k === 'sanhe') { sxD = 3; sxT += '；今日「' + ZHI_ANIMAL[z] + '」與你的生肖「' + an + '」' + r2.n + '，貴人運加分'; }
+    else sxT += '；與你的生肖「' + an + '」無沖';
+  }
+  F.push({ k: '沖煞', h: '沖' + ZHI_ANIMAL[ZHI[chongZ]] + '煞' + SHA_DIR[zi], t: sxT, d: sxD });
+  // 建除十二神（依節氣月建）
+  let jc = null;
+  try {
+    const mp = bazi(Y, Mo, Dd, 6, false).pillars.month;
+    if (mp) {
+      jc = JIANCHU[((zi - mp.zhi) % 12 + 12) % 12];
+      F.push({ k: '建除', h: jc + '日', t: '節氣月建為「' + ZHI[mp.zhi] + '」月，今日值「' + jc + '」——' + JIANCHU_INFO[jc].t, d: JIANCHU_INFO[jc].d });
+    }
+  } catch (e) {}
+  // 流年太歲
+  if (Y === 2026 && zi === 0) F.push({ k: '太歲', h: '日沖太歲', t: '2026 丙午年太歲在午，今日子水沖午，外在環境多變動，行事宜緩', d: -2 });
+  // 行星逆行／陰影期
+  const now = md(Mo, Dd);
+  if (Y === 2026) for (const R of RETRO_2026) {
+    if (now >= md(...R.from) && now <= md(...R.to)) F.push({ k: R.p + '逆行', h: R.p + '逆行中', t: R.p + '逆行於' + R.sign + '（' + R.from.join('/') + '–' + R.to.join('/') + '）：' + R.t, d: R.d });
+    else if (R.pre && now >= md(...R.pre) && now < md(...R.from)) F.push({ k: R.p + '陰影', h: R.p + '逆行前陰影期', t: R.p + '將於 ' + R.from.join('/') + ' 逆行，現在進入前陰影期：' + R.t + '，提早把重要的事處理掉', d: Math.round(R.d / 2) });
+    else if (R.post && now > md(...R.to) && now <= md(...R.post)) F.push({ k: R.p + '陰影', h: R.p + '逆行後陰影期', t: R.p + '已於 ' + R.to.join('/') + ' 順行，仍在後陰影期：逆行期間卡住的事慢慢鬆動', d: 0 });
+  }
+  // 月亮星座 × 你的太陽星座；月相
+  const mLon = moonLongitude(Y, Mo, Dd);
+  const ms = Math.floor(mLon / 30);
+  const sLon = sunLongitude(Y, Mo, Dd, 12);
+  const el = ((mLon - sLon) % 360 + 360) % 360;
+  const phase = el < 12 || el > 348 ? '新月' : Math.abs(el - 180) < 12 ? '滿月' : el < 180 ? '月漸盈' : '月漸虧';
+  if (ctx.sunKey) {
+    const us = ZODIAC_ORDER.indexOf(ctx.sunKey);
+    const asp = ((ms - us) % 12 + 12) % 12;
+    const A = { 0: [3, '月亮回到你的星座，直覺與存在感變強，適合做自己想做的事'], 4: [2, '與你形成三分相（同元素），情緒順、人緣好'], 8: [2, '與你形成三分相（同元素），情緒順、人緣好'],
+      6: [-2, '在你的對宮，容易被別人的情緒牽動，關係裡多聽少辯'], 3: [-2, '與你形成四分相，心浮氣躁，別在情緒上做決定'], 9: [-2, '與你形成四分相，心浮氣躁，別在情緒上做決定'],
+      2: [1, '與你形成六分相，小小順利'], 10: [1, '與你形成六分相，小小順利'] }[asp] || [0, '與你的星座沒有主要相位'];
+    F.push({ k: '月亮', h: '月亮' + SIGN_ZH[ms] + '．' + phase, t: '今天月亮行經' + SIGN_ZH[ms] + '（' + phase + '），' + A[1], d: A[0] });
+  }
+  let score = D.s + F.reduce((a, f) => a + f.d, 0);
+  score = Math.max(35, Math.min(98, score));
   const luckyElem = fav[0];
-  return { date: dt, gz: g + z, tg, score, text: D.t, yi: D.yi, ji: D.ji, basis: '今日為' + g + z + '日，天干' + g + '對你的日主' + dm + '為「' + tg + '」' + (fav.includes(ge) || fav.includes(ze) ? '，且逢你的喜用五行' : ''), color: ELEM_INFO[luckyElem].color.split('、')[0], dir: ELEM_INFO[luckyElem].dir };
+  const basis = F.map(f => f.h).join('、');
+  return { date: dt, gz: g + z, tg, score, base: D.s, factors: F, jc, text: D.t, yi: D.yi, ji: D.ji, basis,
+    color: ELEM_INFO[luckyElem].color.split('、')[0], dir: ELEM_INFO[luckyElem].dir };
 }
 
 // ---------- 星座 2026 下半年行運 ----------

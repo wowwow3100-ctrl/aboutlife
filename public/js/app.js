@@ -477,12 +477,15 @@
       '<div class="sys-body">' + c.html + '</div></section>').join('');
 
     // 今日運勢（每天不同，回訪誘因）
-    const dly = dailyFortune(baziRes.dayMaster, bd.fav);
+    const dly = dailyFortune(baziRes.dayMaster, bd.fav, null, { dayZhi: baziRes.pillars.day.zhi, yearZhi: baziRes.pillars.year.zhi, sunKey: zodiacKey });
     $('#daily-date').textContent = (dly.date.getMonth() + 1) + '月' + dly.date.getDate() + '日．' + dly.gz + '日';
     $('#r-daily').innerHTML =
       '<div class="daily-top"><div class="daily-score">' + dly.score + '<small>分</small></div><div><b style="color:var(--gold-bright)">' + dly.tg + '日</b>．' + TG_PLAIN[dly.tg] + '<br>' +
       '<span style="font-size:14px">🎨 幸運色 ' + dly.color + '　🧭 吉方 ' + dly.dir + '</span></div></div>' +
-      '<p class="month-basis">依據：' + dly.basis + '。</p>' +
+      '<div class="daily-why"><div class="dw-title">🔍 今天的分數怎麼來的</div>' +
+      dly.factors.map(f => '<div class="dw-row"><span class="dw-k">' + f.k + '</span><span class="dw-t"><b>' + f.h + '</b>　' + f.t + '</span><span class="dw-d ' + (f.d > 0 ? 'up' : f.d < 0 ? 'down' : '') + '">' + (f.k === '十神' ? dly.base : (f.d > 0 ? '+' + f.d : f.d < 0 ? f.d : '±0')) + '</span></div>').join('') +
+      '<div class="dw-sum">合計 ' + dly.score + ' 分' + (dly.base + dly.factors.reduce((a, f) => a + f.d, 0) !== dly.score ? '（分數上下限 35–98）' : '') + '</div>' +
+      '<div class="dw-note">八字十神、建除、沖煞參考《協紀辨方書》《三命通會》；逆行日期依 2026 星曆；月亮位置為台灣中午的近似計算。</div></div>' +
       '<p>' + dly.text + '</p><p>✅ 宜：' + dly.yi + '　🚫 忌：' + dly.ji + '</p>' +
       '<p class="daily-come">📅 今日運勢每天換一次，命盤已存在你的裝置裡——明天回來首頁點你的名字，一秒就能看。<br>⚠️ 清除 Cookie／瀏覽器資料、無痕模式或換手機，紀錄會消失，建議順手「存成圖片」留底。</p>';
     saveProfile();
