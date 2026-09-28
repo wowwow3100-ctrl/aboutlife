@@ -1,3 +1,6 @@
 node_modules/
 data/
 *.log
+threads_images/
+clone_backend.bat
+push_backend_admin.bat

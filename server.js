@@ -16,20 +16,59 @@ const BASE_TOTAL = parseInt(process.env.BASE_TOTAL || '112', 10);
 let stats = { total: BASE_TOTAL, vids: {}, daily: {}, events: [] };
 const BAK_FILE = STATS_FILE + '.bak';
 function tryLoad(f) { try { if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { console.log('讀取失敗', f, e.message); } return null; }
-const loaded = tryLoad(STATS_FILE) || tryLoad(BAK_FILE);
-if (loaded) stats = Object.assign(stats, loaded);
+// 從主檔、備份檔、損毀備份中挑「累計數最大」的那份，確保更新部署後數字只增不減
+function bestSaved() {
+  const cands = [STATS_FILE, BAK_FILE];
+  try { for (const f of fs.readdirSync(DATA_DIR)) if (/^stats\.json\.(corrupt-\d+|keep)$/.test(f)) cands.push(path.join(DATA_DIR, f)); } catch (e) {}
+  let best = null, from = null;
+  for (const f of cands) { const o = tryLoad(f); if (o && typeof o.total === 'number' && (!best || o.total > best.total)) { best = o; from = path.basename(f); } }
+  return best ? { data: best, from } : null;
+}
+let loaded = null, loadedFrom = null;
+const first = bestSaved();
+if (first) { loaded = first.data; loadedFrom = first.from; stats = Object.assign(stats, loaded); }
 else if (fs.existsSync(STATS_FILE)) { try { fs.copyFileSync(STATS_FILE, STATS_FILE + '.corrupt-' + Date.now()); } catch (e) {} }
-console.log('統計載入：DATA_DIR=' + DATA_DIR + '，累計 ' + stats.total);
+stats.boots = (stats.boots || 0) + 1;
+const bootAt = new Date().toISOString();
+console.log('統計載入：DATA_DIR=' + DATA_DIR + '，來源 ' + (loadedFrom || '無（新檔）') + '，累計 ' + stats.total + '，第 ' + stats.boots + ' 次啟動');
+
+// 開機當下若沒讀到檔（例如 Volume 晚一步掛上），第一次存檔前再讀一次並「合併」，絕不覆蓋舊資料
+let owned = false;   // 一旦本程序寫過檔，檔案就是自己的，不再合併
+function mergeLate() {
+  if (loaded || owned) return;
+  const late = bestSaved();
+  if (!late) return;
+  const o = late.data;
+  const add = stats.total - BASE_TOTAL;              // 開機後新增的瀏覽
+  const merged = Object.assign({}, o);
+  merged.total = o.total + Math.max(0, add);
+  merged.vids = Object.assign({}, o.vids || {}, stats.vids);
+  merged.daily = Object.assign({}, o.daily || {});
+  for (const [d, v] of Object.entries(stats.daily)) { const x = merged.daily[d] || { v: 0, u: 0 }; merged.daily[d] = { v: x.v + v.v, u: x.u + v.u }; }
+  merged.events = (o.events || []).concat(stats.events).slice(-500);
+  merged.ev = Object.assign({}, o.ev || {});
+  for (const [d, m] of Object.entries(stats.ev || {})) { merged.ev[d] = Object.assign({}, merged.ev[d] || {}); for (const [k, n] of Object.entries(m)) merged.ev[d][k] = (merged.ev[d][k] || 0) + n; }
+  merged.evTotal = Object.assign({}, o.evTotal || {});
+  for (const [k, n] of Object.entries(stats.evTotal || {})) merged.evTotal[k] = (merged.evTotal[k] || 0) + n;
+  merged.boots = Math.max(o.boots || 0, stats.boots);
+  stats = merged; loaded = o; loadedFrom = late.from + '（延遲合併）';
+  console.log('統計延遲合併完成：累計 ' + stats.total);
+}
 
 // 原子寫入：先寫暫存檔再改名，並保留上一版備份，避免部署中斷造成檔案損毀歸零
 let lastSaveErr = null, lastSaveAt = null;
 function saveNow() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    mergeLate();
+    // 保險：若磁碟上已有更大的累計數（不該發生），以磁碟為準合併，絕不倒退
+    const disk = tryLoad(STATS_FILE);
+    if (disk && typeof disk.total === 'number' && disk.total > stats.total) { stats.total = disk.total; }
     const tmp = STATS_FILE + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(stats));
     if (fs.existsSync(STATS_FILE)) { try { fs.copyFileSync(STATS_FILE, BAK_FILE); } catch (e) {} }
     fs.renameSync(tmp, STATS_FILE);
+    owned = true;
     lastSaveAt = new Date().toISOString(); lastSaveErr = null;
   } catch (e) { lastSaveErr = e.message; console.log('統計儲存失敗', e.message); }
 }
@@ -221,7 +260,7 @@ const server = http.createServer((req, res) => {
       events: { today: (stats.ev || {})[day] || {}, total: stats.evTotal || {} },
       daily: days.map(d => Object.assign({ d, v: stats.daily[d].v, u: stats.daily[d].u }, (stats.ev || {})[d] || {})),
       devices: dev,
-      storage: { dataDir: DATA_DIR, envSet: !!process.env.DATA_DIR, volume: process.env.RAILWAY_VOLUME_MOUNT_PATH || null, fileExists: fs.existsSync(STATS_FILE), lastSaveAt, lastSaveErr, bootLoaded: !!loaded },
+      storage: { dataDir: DATA_DIR, envSet: !!process.env.DATA_DIR, volume: process.env.RAILWAY_VOLUME_MOUNT_PATH || null, fileExists: fs.existsSync(STATS_FILE), lastSaveAt, lastSaveErr, bootLoaded: !!loaded, loadedFrom, boots: stats.boots, bootAt },
       ai: { enabled: !!process.env.ANTHROPIC_API_KEY, model: AI_MODEL, usedToday: aiDay === day ? aiDayCount : 0, limit: AI_DAILY_LIMIT }
     }));
     return;
