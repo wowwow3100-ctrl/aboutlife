@@ -70,6 +70,13 @@
     hero.insertBefore(box, hero.firstChild);
     astrolabe(box.querySelector('svg'), { R: 180 });
   }
+  const lead = $('.home-lead');
+  if (lead && !$('.hero-cta')) {
+    const b = document.createElement('button');
+    b.className = 'btn-gold hero-cta'; b.type = 'button'; b.innerHTML = '開始問命 <b>→</b>';
+    b.addEventListener('click', () => { const s = $('#btn-start'); if (s) s.click(); });
+    lead.after(b);
+  }
   const eb = $('.home-eyebrow');
   if (eb) eb.innerHTML = '<span></span>2026 丙午・下半年運勢<span></span>';
 
@@ -107,7 +114,7 @@
     const id = act ? act.id : '';
     document.body.dataset.screen = id.replace('screen-', '');
     if (id === 'screen-loading') runSteps(); else clearInterval(stepTimer);
-    if (id === 'screen-result') setTimeout(buildNav, 60);
+    if (id === 'screen-result') { setTimeout(buildNav, 60); setTimeout(resultFx, 80); }
     scanReveal();
   }
   let lastScreen = null;
@@ -131,6 +138,21 @@
   }
   const res = $('#screen-result');
   if (res) new MutationObserver(() => { clearTimeout(res._t); res._t = setTimeout(scanReveal, 50); }).observe(res, { childList: true, subtree: true });
+
+  // ---------- 結果頁：分數跳動、曲線點序 ----------
+  function countUp(node, to, dur) {
+    if (RM || !node) return;
+    const t0 = performance.now();
+    const tn = [...node.childNodes].find(n => n.nodeType === 3 && /\d/.test(n.textContent));
+    if (!tn) return;
+    const step = now => { const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3); tn.textContent = Math.round(to * e); if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function resultFx() {
+    const ds = $('.daily-score');
+    if (ds) { const v = parseInt(ds.textContent, 10); if (v) countUp(ds, v, 1400); }
+    $$('.mc-pt').forEach(g => g.style.setProperty('--k', g.dataset.i || 0));
+  }
 
   // ---------- 結果頁：章節導覽（sticky chips + scroll-spy） ----------
   function buildNav() {
