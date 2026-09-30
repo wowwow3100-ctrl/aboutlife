@@ -676,3 +676,115 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .lk-v { font-weight: 700; color: #f2e2c0; }
 .lk-why { display: block; font-weight: 400; font-size: 12.5px; color: #a58a5c; margin-top: 3px; line-height: 1.55; }
 .lucky-tips p { margin: 8px 0; }
+
+/* =====================================================================
+   v3 · 獎項級打磨：品牌章、星盤 Hero、儀式化載入、章節導覽、動態
+   ===================================================================== */
+@media screen {
+  /* 品牌「旺」印 */
+  .site-title .seal.seal-wang {
+    font-family: 'Noto Serif TC', serif; font-weight: 900; -webkit-text-fill-color: #fbe9cf; color: #fbe9cf;
+    background: linear-gradient(180deg, #d6482f, #9a2113); border-radius: 7px;
+    box-shadow: inset 0 0 0 2px #9a2113, inset 0 0 0 3.5px rgba(251,233,207,.9), inset 0 0 0 6px transparent, 0 8px 26px rgba(200,54,31,.45);
+    display: inline-flex; align-items: center; justify-content: center; line-height: 1; transform: rotate(-4deg);
+  }
+  .site-head { transition: padding .5s cubic-bezier(.2,.7,.2,1); }
+  .site-en, .byline, .head-divider { transition: opacity .4s, max-height .5s, margin .5s; max-height: 80px; overflow: hidden; }
+
+  /* 內頁精簡頁首 */
+  body[data-screen="form"] .site-head, body[data-screen="loading"] .site-head, body[data-screen="result"] .site-head { padding: 10px 0 2px; }
+  body[data-screen="form"] .site-title, body[data-screen="loading"] .site-title, body[data-screen="result"] .site-title { font-size: 24px !important; gap: 10px; }
+  body[data-screen="form"] .site-title .seal, body[data-screen="loading"] .site-title .seal, body[data-screen="result"] .site-title .seal { width: 34px !important; height: 34px !important; font-size: 19px !important; }
+  body[data-screen="form"] .site-en, body[data-screen="loading"] .site-en, body[data-screen="result"] .site-en,
+  body[data-screen="form"] .byline, body[data-screen="loading"] .byline, body[data-screen="result"] .byline { opacity: 0; max-height: 0; margin: 0 !important; }
+  body[data-screen="form"] .head-divider, body[data-screen="loading"] .head-divider, body[data-screen="result"] .head-divider { margin: 8px auto 14px; }
+
+  /* ---------- Hero 星盤 ---------- */
+  .hero-astro { position: relative; width: min(78vw, 360px); aspect-ratio: 1; margin: 4px auto 8px; color: var(--gold); }
+  .hero-astro::before { content: ''; position: absolute; inset: 12%; border-radius: 50%; background: radial-gradient(circle, rgba(200,54,31,.22), rgba(200,54,31,0) 68%); filter: blur(6px); }
+  .astro { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .astro .ax-ticks { transform-origin: 0 0; animation: axSpin 140s linear infinite; }
+  .astro .ax-band { transform-origin: 0 0; animation: axSpin 220s linear infinite reverse; }
+  .astro .ax-star { transform-origin: 0 0; animation: axSpin 90s linear infinite; }
+  .astro .ax-br { fill: #efe2c6; font: 600 17px 'Noto Serif TC', serif; opacity: 0; animation: axBr .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(.35s + var(--i) * 70ms); }
+  .astro .ax-rings circle { stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: axDraw 1.8s cubic-bezier(.6,.05,.2,1) forwards; }
+  .astro .ax-rings circle:nth-child(2) { animation-delay: .1s } .astro .ax-rings circle:nth-child(3) { animation-delay: .2s }
+  .astro .ax-rings circle:nth-child(4) { animation-delay: .3s } .astro .ax-rings circle:nth-child(5) { animation-delay: .4s }
+  @keyframes axSpin { to { transform: rotate(360deg); } }
+  @keyframes axDraw { to { stroke-dashoffset: 0; } }
+  @keyframes axBr { from { opacity: 0; transform: translateY(4px); } to { opacity: .9; transform: none; } }
+
+  .hero-seal { position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(-4deg);
+    border-radius: 10%; background: linear-gradient(180deg, #d9492f, #97200f);
+    box-shadow: inset 0 0 0 calc(var(--sw, 1) * 5px) #97200f, inset 0 0 0 calc(var(--sw, 1) * 7.5px) rgba(251,233,207,.92), 0 18px 50px rgba(200,54,31,.55), 0 0 0 1px rgba(0,0,0,.3);
+    display: grid; place-items: center; animation: sealIn .7s cubic-bezier(.2,.9,.25,1.2) 1.35s both; }
+  .hero-seal span { font: 900 clamp(40px, 12vw, 62px)/1 'Noto Serif TC', serif; color: #fbe9cf; text-shadow: 0 1px 0 rgba(0,0,0,.25); }
+  .hero-seal.small span { font-size: 40px; }
+  @keyframes sealIn { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-4deg) scale(2.4); } 70% { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg) scale(.94); } 100% { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg) scale(1); } }
+  .hero-ripple { position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(214,72,47,.8); transform: translate(-50%, -50%) scale(.6); opacity: 0; animation: ripple 1.4s cubic-bezier(.2,.7,.2,1) 1.55s both; pointer-events: none; }
+  @keyframes ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.7); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(3.4); } }
+
+  /* Hero 文案進場編排 */
+  .home-eyebrow { white-space: nowrap; }
+  .home-hero > .home-eyebrow, .home-hero > .home-h1, .home-hero > .home-lead { animation: fadeUp .9s cubic-bezier(.2,.7,.2,1) both; }
+  .home-hero > .home-eyebrow { animation-delay: 1.6s } .home-hero > .home-h1 { animation-delay: 1.75s } .home-hero > .home-lead { animation-delay: 1.95s }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+
+  /* ---------- 捲動顯現 ---------- */
+  .fx-ready [data-rv] { opacity: 0; transform: translateY(22px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); transition-delay: var(--d, 0ms); }
+  .fx-ready [data-rv].in { opacity: 1; transform: none; }
+
+  /* 十二門磚：光暈跟隨 */
+  .sys-tile { position: relative; overflow: hidden; }
+  .sys-tile::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .35s;
+    background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 50%), rgba(239,211,148,.16), transparent 60%); }
+  .sys-tile:hover::after { opacity: 1; }
+  .sys-tile:hover .sys-glyph { transform: translateY(-2px) scale(1.06); }
+  .sys-glyph { transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+
+  /* 按鈕：流光＋墨暈 */
+  .btn-gold, .btn-ghost { position: relative; overflow: hidden; isolation: isolate; }
+  .btn-gold::before { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; z-index: -1;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform: skewX(-18deg); animation: sheen 4.5s ease-in-out 3s infinite; }
+  @keyframes sheen { 0%, 70% { left: -60%; } 100% { left: 130%; } }
+  .btn-ink { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: rgba(255,255,255,.45); pointer-events: none; animation: ink .7s ease-out forwards; }
+  .btn-ghost .btn-ink { background: rgba(239,211,148,.35); }
+  @keyframes ink { to { transform: scale(40); opacity: 0; } }
+  :focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 3px; border-radius: 4px; }
+
+  /* ---------- 載入儀式 ---------- */
+  .compass.compass-v3 { position: relative; width: min(72vw, 300px); height: auto; aspect-ratio: 1; margin: 10px auto 18px; color: var(--gold); border: 0; background: none; box-shadow: none; animation: none; }
+  .compass.compass-v3 .astro .ax-ticks { animation-duration: 9s; } .compass.compass-v3 .astro .ax-band { animation-duration: 16s; } .compass.compass-v3 .astro .ax-star { animation-duration: 6s; }
+  .compass.compass-v3 .hero-seal { animation: sealPulse 1.6s ease-in-out infinite; }
+  @keyframes sealPulse { 0%, 100% { transform: translate(-50%, -50%) rotate(-4deg) scale(1); } 50% { transform: translate(-50%, -50%) rotate(-4deg) scale(1.05); box-shadow: inset 0 0 0 5px #97200f, inset 0 0 0 7.5px rgba(251,233,207,.92), 0 18px 70px rgba(200,54,31,.8); } }
+  .load-steps { list-style: none; margin: 18px auto 0; padding: 0; width: max-content; text-align: left; }
+  .load-steps li { display: flex; align-items: center; gap: 12px; color: rgba(238,229,211,.32); font-size: 15px; letter-spacing: .14em; padding: 5px 0; transition: color .4s; }
+  .load-steps li i { width: 9px; height: 9px; transform: rotate(45deg); border: 1px solid currentColor; transition: all .4s; }
+  .load-steps li.on { color: var(--gold-bright); } .load-steps li.on i { background: var(--gold-bright); box-shadow: 0 0 12px var(--gold-bright); animation: blink .8s ease-in-out infinite alternate; }
+  .load-steps li.done { color: rgba(238,229,211,.7); } .load-steps li.done i { background: #c8361f; border-color: #c8361f; }
+  @keyframes blink { to { opacity: .35; } }
+
+  /* ---------- 結果頁章節導覽 ---------- */
+  #r-nav { position: sticky; top: 0; z-index: 30; margin: 0 -14px 16px; padding: 8px 0; transition: background .3s, box-shadow .3s; }
+  #r-nav.stuck { background: rgba(10,8,7,.82); -webkit-backdrop-filter: blur(12px) saturate(1.2); backdrop-filter: blur(12px) saturate(1.2); box-shadow: 0 1px 0 var(--hair), 0 10px 30px rgba(0,0,0,.35); }
+  .rn-track { display: flex; gap: 8px; overflow-x: auto; padding: 2px 14px; scrollbar-width: none; scroll-snap-type: x proximity; }
+  .rn-track::-webkit-scrollbar { display: none; }
+  .rn-track a { flex: none; scroll-snap-align: center; padding: 6px 14px; border: 1px solid var(--hair); border-radius: 999px; color: var(--ink-dim); text-decoration: none; font-size: 14px; letter-spacing: .08em; transition: all .25s; white-space: nowrap; }
+  .rn-track a.on { color: #1a120c; background: linear-gradient(180deg, #f3dc9f, #c9a45c); border-color: transparent; font-weight: 700; box-shadow: 0 4px 16px rgba(201,164,92,.35); }
+
+  /* 今日運勢：標題與依據明細（行動版堆疊） */
+  .daily-box h2 { line-height: 1.5; }
+  .daily-box h2 #daily-date { display: block; font-size: .62em; letter-spacing: .22em; color: var(--ink-dim); margin-top: 2px; }
+  @media (max-width: 560px) {
+    .dw-row { grid-template-columns: auto 1fr auto; grid-template-areas: 'k . d' 't t t'; row-gap: 4px; }
+    .dw-k { grid-area: k; padding: 1px 10px; } .dw-d { grid-area: d; } .dw-t { grid-area: t; }
+    .lk-row { grid-template-columns: 1fr; gap: 4px; } .lk-k { width: fit-content; padding: 2px 12px; }
+    .r-section .inner { padding-left: 16px !important; padding-right: 16px !important; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .astro *, .hero-seal, .hero-ripple, .btn-gold::before, .home-hero > * { animation: none !important; }
+  .astro .ax-br { opacity: .9; } .astro .ax-rings circle { stroke-dashoffset: 0; }
+  .fx-ready [data-rv] { opacity: 1 !important; transform: none !important; }
+}
+@media print { [data-rv] { opacity: 1 !important; transform: none !important; } #r-nav, .hero-astro { display: none !important; } }
