@@ -153,7 +153,8 @@
       if (s.id === 'r-head') return;
       add(s, t.slice(0, 4));
     });
-    $$('#r-cards .sys-card').forEach(c => { const h = c.querySelector('h3'); if (h) add(c, h.textContent.split(/[・．·（(]/)[0].replace('西洋星座', '星座').slice(0, 4)); });
+    const KW = [['星座', '星座'], ['生肖', '生肖'], ['靈數', '靈數'], ['生日', '生日'], ['姓名', '姓名'], ['八字', '八字'], ['紫微', '紫微'], ['人類圖', '人類圖'], ['塔羅', '塔羅'], ['血型', '血型']];
+    $$('#r-cards .sys-card').forEach(c => { const h = c.querySelector('h3'); if (!h) return; const t = h.textContent; const k = KW.find(([w]) => t.includes(w)); add(c, k ? k[1] : t.slice(0, 3)); });
     // 依頁面位置排序
     secs.sort((a, b) => a[0].getBoundingClientRect().top - b[0].getBoundingClientRect().top);
     nav.innerHTML = '<div class="rn-track">' + secs.map(([n, l]) => '<a href="#' + n.id + '">' + l + '</a>').join('') + '</div>';

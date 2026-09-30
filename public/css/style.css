@@ -788,3 +788,30 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .fx-ready [data-rv] { opacity: 1 !important; transform: none !important; }
 }
 @media print { [data-rv] { opacity: 1 !important; transform: none !important; } #r-nav, .hero-astro { display: none !important; } }
+@media screen {
+  /* 首頁：Hero 星盤就是品牌主視覺，頁首收斂 */
+  body[data-screen="intro"] .site-title .seal { display: none !important; }
+  body[data-screen="intro"] .site-head { padding: 14px 0 0; }
+  body[data-screen="intro"] .site-title { font-size: 34px !important; letter-spacing: .14em; }
+  body[data-screen="intro"] .site-en { margin-top: 2px !important; }
+  body[data-screen="intro"] .byline { margin-top: 4px !important; font-size: 14px; }
+  body[data-screen="intro"] .byline a { font-size: 15px; }
+  body[data-screen="intro"] .head-divider { display: none; }
+  .hero-astro { margin-top: 10px; }
+}
+@media screen {
+  .dw-t { font-weight: 400; color: #d9ccb1; } .dw-t b { font-weight: 700; color: #f4e6c7; }
+}
+/* 桌機：Hero 左右構圖（星盤｜標語），其餘全寬 */
+@media screen and (min-width: 980px) {
+  body[data-screen="intro"] .wrap { max-width: 1080px; }
+  .home-hero { display: grid; grid-template-columns: 440px 1fr; column-gap: 56px; align-items: center; text-align: left; }
+  .home-hero > * { grid-column: 1 / -1; }
+  .home-hero > .hero-astro { grid-column: 1; grid-row: 1 / span 3; width: 440px; margin: 0; }
+  .home-hero > .home-eyebrow { grid-column: 2; grid-row: 1; align-self: end; justify-self: start; text-indent: 0; }
+  .home-hero > .home-eyebrow span:first-child { display: none; }
+  .home-hero > .home-h1 { grid-column: 2; grid-row: 2; font-size: 58px; text-indent: 0; margin: 14px 0; }
+  .home-hero > .home-lead { grid-column: 2; grid-row: 3; align-self: start; margin: 0; max-width: 470px; }
+  .home-hero > .home-lead .br-desk { display: none; }
+  .home-hero > #welcome-back, .home-hero > .home-systems, .home-hero > .home-cta, .home-hero > .privacy-line, .home-hero > .home-stats { text-align: center; max-width: 860px; justify-self: center; width: 100%; }
+}
