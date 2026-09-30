@@ -844,3 +844,18 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .fx-ready .r-section[data-rv]:not(.in) .mc-pt { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } .score-fill, .mc-line, .mc-pt { transition: none !important; } }
+@media screen {
+  .r-section h2 .h2-sub { display: block; font-size: .6em; letter-spacing: .24em; color: var(--ink-dim); margin-top: 2px; font-weight: 500; }
+  .mc-detail p { font-weight: 400; color: #ddd0b4; }
+  @media (max-width: 600px) { .mc-val { font-size: 15px; } .mc-mon { font-size: 15px; } .mc-lab { font-size: 13px; } .mc-axis { font-size: 12px; } }
+}
+@media screen {
+  .progress { position: relative; width: max-content; margin-left: auto; margin-right: auto; gap: 46px; }
+  .progress-dot { width: 48px; z-index: 1; }
+  .progress::before, .progress::after { content: ''; position: absolute; left: 24px; top: 8px; height: 1px; }
+  .progress::before { right: 24px; background: var(--hair); }
+  .progress::after { width: var(--p, 0px); background: linear-gradient(90deg, var(--cinnabar), var(--gold-bright)); box-shadow: 0 0 8px rgba(239,211,148,.5); transition: width .6s cubic-bezier(.2,.7,.2,1); }
+  .form-step.active { animation: stepIn .5s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes stepIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+}
+@media screen { .progress::before, .progress::after { top: 7px; } .progress-dot:not(.on)::before { background: #15120f; } }

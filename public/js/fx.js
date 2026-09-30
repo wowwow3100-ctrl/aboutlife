@@ -169,7 +169,7 @@
     add($('.daily-box'), '今日');
     $$('#screen-result > .r-section').forEach(s => {
       const h = s.querySelector('h2'); if (!h || s.classList.contains('daily-box')) return;
-      const t = h.textContent.replace(/[．·].*$/, '').replace('下半年五運總覽', '五運').replace('命理總論', '總論')
+      const t = (h.childNodes[0] ? h.childNodes[0].textContent : h.textContent).replace(/[．·].*$/, '').replace('逐月運勢曲線', '逐月').replace('下半年五運總覽', '五運').replace('命理總論', '總論')
         .replace('2026 下半年', '逐月').replace('參考書目與演算依據', '書目').replace('開運處方箋', '處方').replace('AI 命理師', 'AI');
       if (/性格側寫/.test(t)) return;
       if (s.id === 'r-head') return;
@@ -225,6 +225,13 @@
     s.className = 'btn-ink'; s.style.left = (e.clientX - r.left) + 'px'; s.style.top = (e.clientY - r.top) + 'px';
     b.appendChild(s); setTimeout(() => s.remove(), 700);
   });
+
+  // 表單進度線
+  const prog = $('.progress');
+  if (prog) {
+    const upd = () => { const n = prog.querySelectorAll('.progress-dot.on').length; prog.style.setProperty('--p', Math.max(0, n - 1) * 94 + 'px'); };
+    new MutationObserver(upd).observe(prog, { subtree: true, attributes: true, attributeFilter: ['class'] }); upd();
+  }
 
   document.body.classList.add('fx-ready');
   lastScreen = ($('.screen.active') || {}).id; onScreen();

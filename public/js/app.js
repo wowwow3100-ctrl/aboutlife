@@ -542,9 +542,13 @@
 
   // ---------- 逐月運勢曲線 ----------
   function renderMonthCurve(months) {
-    const W = 640, H = 230, px = 46, top = 34, bot = 44;
+    const narrow = (window.innerWidth || 800) < 600;
+    const W = narrow ? 380 : 640, H = narrow ? 300 : 250, px = narrow ? 34 : 46, top = 36, bot = 50;
+    const vals = months.map(M => M.pts);
+    const lo = Math.max(30, Math.floor((Math.min(...vals) - 8) / 10) * 10), hi = Math.min(100, Math.ceil((Math.max(...vals) + 6) / 10) * 10);
+    const yOf = v => top + (1 - (v - lo) / (hi - lo)) * (H - top - bot);
     const xs = months.map((_, i) => px + i * (W - px * 2) / (months.length - 1));
-    const ys = months.map(M => top + (1 - (M.pts - 40) / 60) * (H - top - bot));
+    const ys = months.map(M => yOf(M.pts));
     let path = 'M' + xs[0] + ',' + ys[0];
     for (let i = 0; i < xs.length - 1; i++) {
       const x0 = xs[i - 1] ?? xs[i], y0 = ys[i - 1] ?? ys[i], x3 = xs[i + 2] ?? xs[i + 1], y3 = ys[i + 2] ?? ys[i + 1];
@@ -557,7 +561,8 @@
     let svg = '<svg class="mc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
       '<defs><linearGradient id="mcFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a45c" stop-opacity=".35"/><stop offset="1" stop-color="#c9a45c" stop-opacity="0"/></linearGradient>' +
       '<filter id="mcGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
-    [50, 70, 90].forEach(v => { const y = top + (1 - (v - 40) / 60) * (H - top - bot); svg += '<line x1="' + px + '" x2="' + (W - px) + '" y1="' + y + '" y2="' + y + '" class="mc-grid"/><text x="' + (px - 10) + '" y="' + (y + 4) + '" class="mc-axis" text-anchor="end">' + v + '</text>'; });
+    const ticks = []; for (let v = lo; v <= hi; v += 10) ticks.push(v);
+    ticks.forEach(v => { const y = yOf(v); svg += '<line x1="' + px + '" x2="' + (W - px) + '" y1="' + y + '" y2="' + y + '" class="mc-grid"/><text x="' + (px - 10) + '" y="' + (y + 4) + '" class="mc-axis" text-anchor="end">' + v + '</text>'; });
     svg += '<path d="' + area + '" fill="url(#mcFill)"/><path d="' + path + '" class="mc-line" filter="url(#mcGlow)"/>';
     months.forEach((M, i) => {
       svg += '<g class="mc-pt" data-i="' + i + '" tabindex="0"><title>' + M.m + '月 ' + M.gz + '月 ' + M.label + ' ' + M.pts + '分</title><circle cx="' + xs[i] + '" cy="' + ys[i] + '" r="16" fill="transparent"/>' +
