@@ -152,6 +152,10 @@
     const ds = $('.daily-score');
     if (ds) { const v = parseInt(ds.textContent, 10); if (v) countUp(ds, v, 1400); }
     $$('.mc-pt').forEach(g => g.style.setProperty('--k', g.dataset.i || 0));
+    // 開運色色票
+    const SW = [['深藍', '#1f3a68'], ['黑', '#111'], ['綠', '#3d7a4a'], ['青', '#2f7f7a'], ['紅', '#c8361f'], ['橘', '#e0822f'], ['黃', '#d9b23a'], ['米', '#e8dcc0'], ['白', '#f2efe8'], ['金', '#c9a45c'], ['銀', '#c0c0c0']];
+    const sw = txt => { const out = [], seen = new Set(); txt.split(/[、，,]/).forEach(w => { const m = SW.find(([k]) => w.includes(k)); if (m && !seen.has(m[1])) { seen.add(m[1]); out.push(m[1]); } }); return out.map(c => '<i class="swatch" style="--c:' + c + '"></i>').join(''); };
+    $$('.lk-row').forEach(r => { const k = r.querySelector('.lk-k'); const v = r.querySelector('.lk-v'); if (k && v && k.textContent === '開運色' && !v.querySelector('.swatch')) v.insertAdjacentHTML('afterbegin', '<span class="swatches">' + sw(v.firstChild.textContent) + '</span>'); });
   }
 
   // ---------- 結果頁：章節導覽（sticky chips + scroll-spy） ----------
@@ -225,6 +229,22 @@
     s.className = 'btn-ink'; s.style.left = (e.clientX - r.left) + 'px'; s.style.top = (e.clientY - r.top) + 'px';
     b.appendChild(s); setTimeout(() => s.remove(), 700);
   });
+
+  // 結果頁動作鈕：線性圖示取代 emoji
+  const IC = {
+    'btn-share': '<path d="M15 8a3 3 0 1 0-2.8-4M9 12l6 3.5M9 12l6-3.5"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/>',
+    'btn-image': '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+    'btn-compact': '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+    'btn-friend': '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5.6M18 15c1.9.6 3.1 2.2 3.4 4.6"/>',
+    'btn-redo': '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>',
+    'btn-print': '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>'
+  };
+  Object.keys(IC).forEach(id => {
+    const b = document.getElementById(id); if (!b) return;
+    const label = b.textContent.replace(/^[^\u4e00-\u9fff]+/, '').trim();
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + IC[id] + '</svg><span>' + label + '</span>';
+  });
+  const shareB = document.getElementById('btn-share'); if (shareB) { shareB.classList.remove('btn-ghost'); shareB.classList.add('btn-gold'); }
 
   // 表單進度線
   const prog = $('.progress');

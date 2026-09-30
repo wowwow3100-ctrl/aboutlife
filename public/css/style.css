@@ -859,3 +859,16 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   @keyframes stepIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
 }
 @media screen { .progress::before, .progress::after { top: 7px; } .progress-dot:not(.on)::before { background: #15120f; } }
+@media screen { .form-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .form-nav .btn-gold, .form-nav .btn-ghost { margin: 0 !important; } .form-nav .btn-gold { min-width: 150px; } }
+@media screen {
+  .swatches { display: inline-flex; gap: 6px; margin-right: 10px; vertical-align: -4px; }
+  .swatch { width: 20px; height: 20px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1.5px rgba(239,211,148,.55), 0 2px 8px rgba(0,0,0,.5); display: inline-block; }
+}
+@media screen {
+  .result-actions { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 520px; margin: 26px auto 22px !important; }
+  .result-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; margin: 0 !important; width: 100%; padding: 13px 10px !important; font-size: 15px; letter-spacing: .08em; }
+  .result-actions svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  #btn-share { grid-column: 1 / -1; order: -2; font-size: 17px; padding: 15px 10px !important; }
+  #btn-image { order: -1; } #btn-compact { order: 0; } #btn-friend { order: 1; } #btn-redo { order: 2; }
+  #btn-print { grid-column: 1 / -1; order: 3; opacity: .8; }
+}
